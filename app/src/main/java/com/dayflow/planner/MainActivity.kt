@@ -54,7 +54,9 @@ import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material.icons.rounded.Save
@@ -1333,6 +1335,12 @@ private fun FocusHeroCard(
     onReset: () -> Unit,
     onSelectDuration: (Int) -> Unit
 ) {
+    var customInput by rememberSaveable { mutableStateOf("") }
+    var showCustomField by rememberSaveable { mutableStateOf(false) }
+    val onText = MaterialTheme.colorScheme.onSurface
+    val mutedText = MaterialTheme.colorScheme.onSurfaceVariant
+    val primary = MaterialTheme.colorScheme.primary
+
     Card(
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -1347,71 +1355,136 @@ private fun FocusHeroCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Помодоро", color = TextSecondary, style = MaterialTheme.typography.bodyLarge)
+                    Text("Помодоро", color = mutedText, style = MaterialTheme.typography.bodyLarge)
                     Text(
                         text = remainingLabel,
-                        color = TextPrimary,
-                        fontSize = 42.sp,
-                        fontWeight = FontWeight.ExtraBold
+                        color = onText,
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-1).sp
+                    )
+                    Text(
+                        text = "$durationMinutes хв · ${if (isRunning) "Йде робота ▶" else "Пауза ⏸"}",
+                        color = mutedText,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
-                IconButton(onClick = onStartPause) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(primary.copy(alpha = 0.15f))
+                        .clickable { onStartPause() },
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
-                        imageVector = if (isRunning) Icons.Rounded.NotificationsNone else Icons.Rounded.PlayArrow,
-                        contentDescription = if (isRunning) "Пауза" else "Старт",
-                        tint = PrimaryBlue,
-                        modifier = Modifier.size(34.dp)
+                        imageVector = if (isRunning) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        contentDescription = null,
+                        tint = primary,
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
 
+            // Progress bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(14.dp)
+                    .height(10.dp)
                     .clip(RoundedCornerShape(999.dp))
-                    .background(PrimaryBlue.copy(alpha = 0.12f))
+                    .background(primary.copy(alpha = 0.12f))
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progress)
-                        .height(14.dp)
+                        .height(10.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(Brush.horizontalGradient(colors = listOf(PrimaryBlue, AccentBlue)))
+                        .background(Brush.horizontalGradient(colors = listOf(primary, primary.copy(alpha = 0.6f))))
                 )
             }
 
+            // Preset + custom chips
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 listOf(25, 45, 60).forEach { minutes ->
+                    val selected = durationMinutes == minutes && !showCustomField
                     AssistChip(
-                        onClick = { onSelectDuration(minutes) },
-                        label = { Text("$minutes хв") },
+                        onClick = {
+                            showCustomField = false
+                            onSelectDuration(minutes)
+                        },
+                        label = { Text("$minutes хв", color = if (selected) primary else mutedText) },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = if (durationMinutes == minutes) {
-                                PrimaryBlue.copy(alpha = 0.18f)
-                            } else {
-                                MaterialTheme.colorScheme.surface
-                            }
-                        )
+                            containerColor = if (selected) primary.copy(alpha = 0.18f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ),
+                        border = if (selected) BorderStroke(1.dp, primary.copy(alpha = 0.5f)) else null
                     )
+                }
+                // Custom chip
+                AssistChip(
+                    onClick = { showCustomField = !showCustomField },
+                    label = { Text("✏️ Свій час", color = if (showCustomField) primary else mutedText) },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = if (showCustomField) primary.copy(alpha = 0.18f)
+                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
+                    border = if (showCustomField) BorderStroke(1.dp, primary.copy(alpha = 0.5f)) else null
+                )
+            }
+
+            // Custom time input field
+            if (showCustomField) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = customInput,
+                        onValueChange = { v -> if (v.length <= 3 && v.all { it.isDigit() }) customInput = v },
+                        modifier = Modifier.width(120.dp),
+                        label = { Text("Хвилини") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        ),
+                        trailingIcon = { Text("хв", color = mutedText, style = MaterialTheme.typography.bodySmall) }
+                    )
+                    Button(
+                        onClick = {
+                            val mins = customInput.toIntOrNull()
+                            if (mins != null && mins in 1..180) {
+                                onSelectDuration(mins)
+                                showCustomField = false
+                                customInput = ""
+                            }
+                        },
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = primary)
+                    ) {
+                        Text("Встановити")
+                    }
                 }
             }
 
+            // Control row
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AssistChip(
                     onClick = onReset,
-                    label = { Text("Скинути") },
-                    leadingIcon = { Icon(Icons.Rounded.Coffee, contentDescription = null) },
-                    colors = AssistChipDefaults.assistChipColors(containerColor = AccentPeach.copy(alpha = 0.18f))
+                    label = { Text("Скинути", color = mutedText) },
+                    leadingIcon = { Icon(Icons.Rounded.Refresh, contentDescription = null, tint = mutedText) },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
                 )
                 AssistChip(
                     onClick = onStartPause,
-                    label = { Text(if (isRunning) "Пауза" else "Старт") },
-                    leadingIcon = { Icon(Icons.Rounded.Timer, contentDescription = null) },
-                    colors = AssistChipDefaults.assistChipColors(containerColor = AccentMint.copy(alpha = 0.18f))
+                    label = { Text(if (isRunning) "Пауза" else "Старт", color = primary) },
+                    leadingIcon = { Icon(Icons.Rounded.Timer, contentDescription = null, tint = primary) },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = primary.copy(alpha = 0.14f)
+                    )
                 )
             }
         }
