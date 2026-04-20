@@ -322,7 +322,7 @@ private fun DayFlowApp(
             FloatingActionButton(
                 onClick = onShowNewTaskSheet,
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentcolor = MaterialTheme.colorScheme.background
+                contentColor = MaterialTheme.colorScheme.background
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Нова задача")
             }
