@@ -502,7 +502,7 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
         }
 
         item {
-            CalendarAgendaCard(events = agendaItems)
+            CalendarAgendaCard(events = agendaItems, monthLabel = currentMonthLabel)
         }
 
         item {
@@ -928,7 +928,7 @@ private fun MiniStatCard(
 }
 
 @Composable
-private fun CalendarAgendaCard(events: List<AgendaItem>) {
+private fun CalendarAgendaCard(events: List<AgendaItem>, monthLabel: String) {
     val days = listOf("ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "НД")
 
     Card(
@@ -950,7 +950,7 @@ private fun CalendarAgendaCard(events: List<AgendaItem>) {
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = currentMonthLabel,
+                        text = monthLabel,
                         modifier = Modifier.padding(horizontal = 10.dp),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold,
