@@ -227,7 +227,8 @@ enum class ModuleKey {
     HABITS,
     SETTINGS,
     COUNTDOWN,
-    SEARCH
+    SEARCH,
+    NOTIFICATIONS
 }
 
 data class FocusTimerState(
@@ -375,5 +376,6 @@ private fun defaultModules(): List<ModulePreference> = listOf(
     ModulePreference(ModuleKey.HABITS, true),
     ModulePreference(ModuleKey.SETTINGS, true),
     ModulePreference(ModuleKey.COUNTDOWN, false),
-    ModulePreference(ModuleKey.SEARCH, false)
+    ModulePreference(ModuleKey.SEARCH, false),
+    ModulePreference(ModuleKey.NOTIFICATIONS, false)
 )

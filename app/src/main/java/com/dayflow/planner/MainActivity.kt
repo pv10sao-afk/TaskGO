@@ -7,6 +7,8 @@ package com.dayflow.planner
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -130,6 +132,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Create notification channel once on startup
+        createNotificationChannel(this)
+        // Request notification permission on Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+        }
         setContent {
             PlannerRoot()
         }
@@ -182,7 +190,29 @@ private fun PlannerRoot() {
     val appState by plannerStore.appState.collectAsState(initial = PlannerStore.defaultState())
     val scope = rememberCoroutineScope()
     val currentTab = PlannerTab.entries.find { it.name == appState.selectedTabName } ?: PlannerTab.Today
+
+    // If the active tab's module gets disabled, redirect to Today tab
+    LaunchedEffect(appState.modules) {
+        val moduleStates = appState.modules.associateBy({ it.key }, { it.enabled })
+        val currentTabDisabled = when (currentTab) {
+            PlannerTab.Calendar -> moduleStates[ModuleKey.CALENDAR] == false
+            PlannerTab.Matrix   -> moduleStates[ModuleKey.MATRIX] == false
+            PlannerTab.Focus    -> moduleStates[ModuleKey.FOCUS] == false
+            else -> false
+        }
+        if (currentTabDisabled) {
+            plannerStore.setSelectedTab(PlannerTab.Today.name)
+        }
+    }
     var showNewTaskSheet by rememberSaveable { mutableStateOf(false) }
+    // Ticks every second always – used for deadline countdowns in TaskCards
+    val tickMillis by produceState(initialValue = System.currentTimeMillis()) {
+        while (true) {
+            value = System.currentTimeMillis()
+            delay(1_000L)
+        }
+    }
+    // Ticks every second when focus timer running, else every 15s – used for focus timer display
     val nowMillis by produceState(
         initialValue = System.currentTimeMillis(),
         key1 = appState.focusTimer.isRunning
@@ -205,6 +235,7 @@ private fun PlannerRoot() {
             appState = appState,
             currentTab = currentTab,
             nowMillis = nowMillis,
+            tickMillis = tickMillis,
             onSelectTab = { tab ->
                 scope.launch {
                     plannerStore.setSelectedTab(tab.name)
@@ -266,6 +297,7 @@ private fun DayFlowApp(
     appState: PlannerState,
     currentTab: PlannerTab,
     nowMillis: Long,
+    tickMillis: Long,
     onSelectTab: (PlannerTab) -> Unit,
     onToggleTask: (Int) -> Unit,
     onDeleteTask: (Int) -> Unit,
@@ -316,7 +348,7 @@ private fun DayFlowApp(
                 PlannerTab.Today -> TodayScreen(
                     tasks = appState.tasks,
                     timerLabel = formatTimer(appState.focusTimer.remainingAt(nowMillis)),
-                    nowMillis = nowMillis,
+                    nowMillis = tickMillis,
                     onToggleTask = onToggleTask,
                     onDeleteTask = onDeleteTask
                 )
@@ -467,26 +499,37 @@ private fun TodayScreen(
 
 @Composable
 private fun CalendarScreen(tasks: List<PlannerTask>) {
-    val cal = remember { Calendar.getInstance() }
-    val currentMonthLabel = remember {
-        val months = listOf("Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень")
-        "${months[cal.get(Calendar.MONTH)]} ${cal.get(Calendar.YEAR)}"
+    val monthNames = listOf("Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень")
+    val today = remember { Calendar.getInstance() }
+
+    // State: current displayed month/year
+    var displayYear by remember { mutableStateOf(today.get(Calendar.YEAR)) }
+    var displayMonth by remember { mutableStateOf(today.get(Calendar.MONTH)) }
+
+    // State: selected day (day of month, or -1 = none)
+    var selectedDay by remember { mutableStateOf(today.get(Calendar.DAY_OF_MONTH)) }
+
+    // Compute days in displayed month
+    val daysInMonth = remember(displayYear, displayMonth) {
+        val c = Calendar.getInstance()
+        c.set(displayYear, displayMonth, 1)
+        c.getActualMaximum(Calendar.DAY_OF_MONTH)
+    }
+    // Day of week for 1st of displayed month (Mon=0 ... Sun=6)
+    val firstDayOffset = remember(displayYear, displayMonth) {
+        val c = Calendar.getInstance()
+        c.set(displayYear, displayMonth, 1)
+        (c.get(Calendar.DAY_OF_WEEK) + 5) % 7
     }
 
-    val agendaItems = remember(tasks) {
-        val nowCal = Calendar.getInstance()
-        val currentWeek = nowCal.get(Calendar.WEEK_OF_YEAR)
-        val currentYear = nowCal.get(Calendar.YEAR)
-        
-        tasks.mapNotNull { task ->
-            if (task.deadlineMillis == null) return@mapNotNull null
-            val taskCal = Calendar.getInstance().apply { timeInMillis = task.deadlineMillis }
-            if (taskCal.get(Calendar.YEAR) == currentYear && taskCal.get(Calendar.WEEK_OF_YEAR) == currentWeek) {
-                val dayOfWeek = taskCal.get(Calendar.DAY_OF_WEEK)
-                val dayIndex = (dayOfWeek + 5) % 7 // Monday = 0
-                val hour = taskCal.get(Calendar.HOUR_OF_DAY) + taskCal.get(Calendar.MINUTE) / 60f
-                AgendaItem(task.title, dayIndex, hour, hour + 1f, quadrantColor(task.quadrant))
-            } else null
+    // Tasks for selected day
+    val selectedTasks = remember(tasks, displayYear, displayMonth, selectedDay) {
+        tasks.filter { task ->
+            if (task.deadlineMillis == null) return@filter false
+            val tc = Calendar.getInstance().apply { timeInMillis = task.deadlineMillis }
+            tc.get(Calendar.YEAR) == displayYear &&
+            tc.get(Calendar.MONTH) == displayMonth &&
+            tc.get(Calendar.DAY_OF_MONTH) == selectedDay
         }
     }
 
@@ -496,22 +539,154 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
     ) {
         item {
             HeaderBlock(
-                title = "Календар дня",
-                subtitle = "Тиждень, події й список задач в одному ритмі"
+                title = "Календар",
+                subtitle = "Обирай день щоб побачити свої задачі"
             )
         }
 
         item {
-            CalendarAgendaCard(events = agendaItems, monthLabel = currentMonthLabel)
+            // Month navigation header
+            Card(
+                shape = RoundedCornerShape(32.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Month selector row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = {
+                            if (displayMonth == 0) { displayMonth = 11; displayYear-- }
+                            else displayMonth--
+                            selectedDay = 1
+                        }) {
+                            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Попередній місяц", tint = PrimaryBlue)
+                        }
+                        Text(
+                            text = "${monthNames[displayMonth]} $displayYear",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextPrimary
+                        )
+                        IconButton(onClick = {
+                            if (displayMonth == 11) { displayMonth = 0; displayYear++ }
+                            else displayMonth++
+                            selectedDay = 1
+                        }) {
+                            Icon(Icons.Rounded.ArrowForwardIos, contentDescription = "Наступний місяц", tint = PrimaryBlue)
+                        }
+                    }
+
+                    // Days of week header
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        listOf("ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "НД").forEach { d ->
+                            Text(
+                                text = d,
+                                modifier = Modifier.width(40.dp),
+                                color = TextSecondary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+
+                    // Calendar grid
+                    val totalCells = firstDayOffset + daysInMonth
+                    val rows = (totalCells + 6) / 7
+                    for (row in 0 until rows) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            for (col in 0 until 7) {
+                                val cellIndex = row * 7 + col
+                                val dayNum = cellIndex - firstDayOffset + 1
+                                val isValid = dayNum in 1..daysInMonth
+                                val isToday = isValid &&
+                                    dayNum == today.get(Calendar.DAY_OF_MONTH) &&
+                                    displayMonth == today.get(Calendar.MONTH) &&
+                                    displayYear == today.get(Calendar.YEAR)
+                                val isSelected = isValid && dayNum == selectedDay
+                                val hasTasks = isValid && tasks.any { task ->
+                                    if (task.deadlineMillis == null) return@any false
+                                    val tc = Calendar.getInstance().apply { timeInMillis = task.deadlineMillis }
+                                    tc.get(Calendar.YEAR) == displayYear &&
+                                    tc.get(Calendar.MONTH) == displayMonth &&
+                                    tc.get(Calendar.DAY_OF_MONTH) == dayNum
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .width(40.dp)
+                                        .height(44.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            when {
+                                                isSelected -> PrimaryBlue
+                                                isToday -> PrimaryBlue.copy(alpha = 0.15f)
+                                                else -> Color.Transparent
+                                            }
+                                        )
+                                        .then(if (isValid) Modifier.clickable { selectedDay = dayNum } else Modifier),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isValid) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = dayNum.toString(),
+                                                fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isSelected) SurfaceWhite else if (isToday) PrimaryBlue else TextPrimary,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            if (hasTasks) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(4.dp)
+                                                        .clip(CircleShape)
+                                                        .background(if (isSelected) SurfaceWhite else AccentRose)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
+        // Tasks for selected day
         item {
-            WeekTasksCard(tasks = tasks.take(4))
+            SectionHeader(
+                title = if (selectedDay > 0) "Задачі на ${selectedDay} ${monthNames[displayMonth]}" else "Задачі",
+                action = if (selectedTasks.isNotEmpty()) "${selectedTasks.size}" else null
+            )
         }
 
-        item {
-            Spacer(modifier = Modifier.height(72.dp))
+        if (selectedTasks.isEmpty()) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        Text("Немає задач на цей день", color = TextSecondary)
+                    }
+                }
+            }
+        } else {
+            items(selectedTasks) { task ->
+                TaskCard(
+                    task = task,
+                    onToggle = {},
+                    onDelete = null
+                )
+            }
         }
+
+        item { Spacer(modifier = Modifier.height(72.dp)) }
     }
 }
 
@@ -1669,7 +1844,8 @@ private fun buildModuleItems(modules: List<ModulePreference>): List<ModuleUiItem
         ModuleUiItem(ModuleKey.HABITS, "Привички", "Формуйте стабільний ритм", states[ModuleKey.HABITS] ?: true, Icons.Rounded.AutoGraph),
         ModuleUiItem(ModuleKey.SETTINGS, "Налаштування", "Тема, нагадування, безпека", states[ModuleKey.SETTINGS] ?: true, Icons.Rounded.Settings),
         ModuleUiItem(ModuleKey.COUNTDOWN, "Зворотний відлік", "Тримайте в полі зору дедлайни", states[ModuleKey.COUNTDOWN] ?: false, Icons.Rounded.Alarm),
-        ModuleUiItem(ModuleKey.SEARCH, "Пошук", "Швидкий доступ до задач", states[ModuleKey.SEARCH] ?: false, Icons.Rounded.DashboardCustomize)
+        ModuleUiItem(ModuleKey.SEARCH, "Пошук", "Швидкий доступ до задач", states[ModuleKey.SEARCH] ?: false, Icons.Rounded.DashboardCustomize),
+        ModuleUiItem(ModuleKey.NOTIFICATIONS, "🔔 Сповіщення", "Нагадування про дедлайни задач в центрі сповіщень", states[ModuleKey.NOTIFICATIONS] ?: false, Icons.Rounded.NotificationsNone)
     )
 }
 
