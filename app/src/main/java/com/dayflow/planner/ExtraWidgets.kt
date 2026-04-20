@@ -76,7 +76,18 @@ class FocusWidget : AppWidgetProvider() {
                     else            -> "Таймер не запущений"
                 }
 
-                views.setTextViewText(R.id.widget_focus_time, label)
+                if (timer.isRunning) {
+                    val baseMillis = android.os.SystemClock.elapsedRealtime() + remaining
+                    views.setChronometer(R.id.widget_focus_time_chronometer, baseMillis, "%s", true)
+                    views.setViewVisibility(R.id.widget_focus_time_chronometer, android.view.View.VISIBLE)
+                    views.setViewVisibility(R.id.widget_focus_time_text, android.view.View.GONE)
+                } else {
+                    views.setTextViewText(R.id.widget_focus_time_text, label)
+                    views.setChronometer(R.id.widget_focus_time_chronometer, 0L, "%s", false) // Stop if it was running
+                    views.setViewVisibility(R.id.widget_focus_time_text, android.view.View.VISIBLE)
+                    views.setViewVisibility(R.id.widget_focus_time_chronometer, android.view.View.GONE)
+                }
+
                 views.setTextViewText(R.id.widget_focus_status, status)
                 manager.updateAppWidget(id, views)
             }

@@ -173,6 +173,26 @@ class PlannerStore(private val context: Context) {
             val currentState = PlannerStateJson.decode(preferences[STATE_KEY])
             preferences[STATE_KEY] = PlannerStateJson.encode(transform(currentState))
         }
+        updateWidgets()
+    }
+
+    private fun updateWidgets() {
+        val manager = android.appwidget.AppWidgetManager.getInstance(context)
+        val widgetClasses = listOf(
+            com.dayflow.planner.PlannerWidget::class.java,
+            com.dayflow.planner.MiniWidget::class.java,
+            com.dayflow.planner.FocusWidget::class.java
+        )
+        for (clazz in widgetClasses) {
+            val ids = manager.getAppWidgetIds(android.content.ComponentName(context, clazz))
+            if (ids.isNotEmpty()) {
+                val intent = android.content.Intent(context, clazz).apply {
+                    action = android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                    putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                }
+                context.sendBroadcast(intent)
+            }
+        }
     }
 
     companion object {

@@ -120,11 +120,7 @@ import com.dayflow.planner.ui.theme.AccentYellow
 import com.dayflow.planner.ui.theme.AppThemeMode
 import com.dayflow.planner.ui.theme.BorderSoft
 import com.dayflow.planner.ui.theme.DayFlowTheme
-import com.dayflow.planner.ui.theme.PrimaryBlue
 import com.dayflow.planner.ui.theme.SkyBlue
-import com.dayflow.planner.ui.theme.SurfaceWhite
-import com.dayflow.planner.ui.theme.TextPrimary
-import com.dayflow.planner.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -325,8 +321,8 @@ private fun DayFlowApp(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onShowNewTaskSheet,
-                containerColor = PrimaryBlue,
-                contentColor = SurfaceWhite
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentcolor = MaterialTheme.colorScheme.background
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Нова задача")
             }
@@ -480,7 +476,7 @@ private fun TodayScreen(
                     modifier = Modifier.width(160.dp),
                     title = "Фокус",
                     value = timerLabel,
-                    accent = PrimaryBlue,
+                    accent = MaterialTheme.colorScheme.primary,
                     icon = Icons.Rounded.PlayArrow
                 )
                 MiniStatCard(
@@ -564,20 +560,20 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
                             else displayMonth--
                             selectedDay = 1
                         }) {
-                            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Попередній місяц", tint = PrimaryBlue)
+                            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Попередній місяц", tint = MaterialTheme.colorScheme.primary)
                         }
                         Text(
                             text = "${monthNames[displayMonth]} $displayYear",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         IconButton(onClick = {
                             if (displayMonth == 11) { displayMonth = 0; displayYear++ }
                             else displayMonth++
                             selectedDay = 1
                         }) {
-                            Icon(Icons.Rounded.ArrowForwardIos, contentDescription = "Наступний місяц", tint = PrimaryBlue)
+                            Icon(Icons.Rounded.ArrowForwardIos, contentDescription = "Наступний місяц", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
 
@@ -587,7 +583,7 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
                             Text(
                                 text = d,
                                 modifier = Modifier.width(40.dp),
-                                color = TextSecondary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -624,8 +620,8 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
                                         .clip(CircleShape)
                                         .background(
                                             when {
-                                                isSelected -> PrimaryBlue
-                                                isToday -> PrimaryBlue.copy(alpha = 0.15f)
+                                                isSelected -> MaterialTheme.colorScheme.primary
+                                                isToday -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                                                 else -> Color.Transparent
                                             }
                                         )
@@ -637,7 +633,7 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
                                             Text(
                                                 text = dayNum.toString(),
                                                 fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) SurfaceWhite else if (isToday) PrimaryBlue else TextPrimary,
+                                                color = if (isSelected) MaterialTheme.colorScheme.surface else if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                                 style = MaterialTheme.typography.bodyMedium
                                             )
                                             if (hasTasks) {
@@ -645,7 +641,7 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
                                                     modifier = Modifier
                                                         .size(4.dp)
                                                         .clip(CircleShape)
-                                                        .background(if (isSelected) SurfaceWhite else AccentRose)
+                                                        .background(if (isSelected) MaterialTheme.colorScheme.surface else AccentRose)
                                                 )
                                             }
                                         }
@@ -674,7 +670,7 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        Text("Немає задач на цей день", color = TextSecondary)
+                        Text("Немає задач на цей день", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -877,7 +873,7 @@ private fun HeaderBlock(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyLarge,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -902,14 +898,14 @@ private fun QuoteCard() {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(
                     text = "День не має бути перевантаженим. Він має бути зібраним.",
-                    color = SurfaceWhite,
+                    color = MaterialTheme.colorScheme.background,
                     fontSize = 24.sp,
                     lineHeight = 30.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Тут усе тримається локально: стан задач, фокус-сесії, тема і вкладки.",
-                    color = SurfaceWhite.copy(alpha = 0.78f),
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.78f),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -944,11 +940,11 @@ private fun CategoryStrip(categories: List<CategoryChip>) {
                         Icon(Icons.Rounded.ViewWeek, contentDescription = category.title, tint = category.tint)
                     }
                     Column {
-                        Text(category.title, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                        Text(category.title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                         Text(
                             text = "${category.count} шт.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -974,11 +970,11 @@ private fun SectionHeader(
             color = MaterialTheme.colorScheme.onBackground
         )
         action?.let {
-            Surface(shape = CircleShape, color = PrimaryBlue.copy(alpha = 0.12f)) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
                 Text(
                     text = it,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    color = PrimaryBlue,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -996,7 +992,7 @@ private fun TaskCard(
     Card(
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, BorderSoft.copy(alpha = 0.7f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(
@@ -1019,7 +1015,7 @@ private fun TaskCard(
                             Icons.Rounded.RadioButtonUnchecked
                         },
                         contentDescription = task.title,
-                        tint = if (task.completed) quadrantColor(task.quadrant) else TextSecondary
+                        tint = if (task.completed) quadrantColor(task.quadrant) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
@@ -1027,7 +1023,7 @@ private fun TaskCard(
                         text = task.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (task.completed) TextSecondary else TextPrimary,
+                        color = if (task.completed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                         textDecoration = if (task.completed) TextDecoration.LineThrough else null
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -1042,11 +1038,11 @@ private fun TaskCard(
                     Text(
                         text = dueLabel,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (timerText == "Прострочено") AccentRose else TextSecondary
+                        color = if (timerText == "Прострочено") AccentRose else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (task.note.isNotBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(task.note, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        Text(task.note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 if (onDelete != null) {
@@ -1093,10 +1089,10 @@ private fun MiniStatCard(
             ) {
                 Icon(icon, contentDescription = title, tint = accent)
             }
-            Text(text = title, color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+            Text(text = title, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             Text(
                 text = value,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 26.sp
             )
@@ -1118,12 +1114,12 @@ private fun CalendarAgendaCard(events: List<AgendaItem>, monthLabel: String) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Rounded.CalendarMonth, contentDescription = null, tint = TextSecondary)
+                Icon(Icons.Rounded.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Rounded.ArrowBackIosNew,
                         contentDescription = null,
-                        tint = TextSecondary,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
@@ -1131,10 +1127,10 @@ private fun CalendarAgendaCard(events: List<AgendaItem>, monthLabel: String) {
                         modifier = Modifier.padding(horizontal = 10.dp),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                Icon(Icons.Rounded.Add, contentDescription = null, tint = TextSecondary)
+                Icon(Icons.Rounded.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Spacer(modifier = Modifier.height(18.dp))
@@ -1142,18 +1138,18 @@ private fun CalendarAgendaCard(events: List<AgendaItem>, monthLabel: String) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 days.forEachIndexed { index, day ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(day, color = TextSecondary, style = MaterialTheme.typography.labelMedium)
+                        Text(day, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
                         Spacer(modifier = Modifier.height(8.dp))
                         Box(
                             modifier = Modifier
                                 .size(if (index == 4) 44.dp else 36.dp)
                                 .clip(CircleShape)
-                                .background(if (index == 4) PrimaryBlue else Color.Transparent),
+                                .background(if (index == 4) MaterialTheme.colorScheme.primary else Color.Transparent),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = (14 + index).toString(),
-                                color = if (index == 4) SurfaceWhite else TextPrimary,
+                                color = if (index == 4) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -1192,7 +1188,7 @@ private fun TimelineGrid(events: List<AgendaItem>) {
                     text = "${startHour + index}",
                     modifier = Modifier.width(30.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 DividerLine(
                     modifier = Modifier
@@ -1217,7 +1213,7 @@ private fun TimelineGrid(events: List<AgendaItem>) {
                 Text(
                     text = event.title,
                     modifier = Modifier.padding(10.dp),
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -1231,7 +1227,7 @@ private fun DividerLine(modifier: Modifier = Modifier) {
     HorizontalDivider(
         modifier = modifier.padding(top = 8.dp),
         thickness = 1.dp,
-        color = BorderSoft
+        color = MaterialTheme.colorScheme.outline
     )
 }
 
@@ -1246,7 +1242,7 @@ private fun WeekTasksCard(tasks: List<PlannerTask>) {
                 text = "Завдання тижня",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             tasks.forEach { task ->
                 Row(
@@ -1262,10 +1258,10 @@ private fun WeekTasksCard(tasks: List<PlannerTask>) {
                                 .background(quadrantColor(task.quadrant).copy(alpha = 0.22f))
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(task.title, color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
+                        Text(task.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
                     }
                     val dateLabel = if (task.deadlineMillis != null) formatDateShort(task.deadlineMillis) else "Без дати"
-                    Text(dateLabel, color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+                    Text(dateLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -1302,7 +1298,7 @@ private fun QuadrantCard(
                         .height(120.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Немає задач", color = TextSecondary)
+                    Text("Немає задач", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 tasks.take(4).forEach { task ->
@@ -1310,13 +1306,13 @@ private fun QuadrantCard(
                         Icon(
                             imageVector = Icons.Rounded.RadioButtonUnchecked,
                             contentDescription = null,
-                            tint = TextSecondary,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
                         )
                         Column {
-                            Text(task.title, color = TextPrimary, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                            Text(task.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
                             val dateLabel = if (task.deadlineMillis != null) formatDateShort(task.deadlineMillis!!) else "Без дати"
-                            Text(dateLabel, color = TextSecondary, style = MaterialTheme.typography.labelMedium)
+                            Text(dateLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
@@ -1508,12 +1504,12 @@ private fun HabitHeatmapCard() {
                 text = "Теплова карта звички",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "Поїсти фрукти",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 values.forEachIndexed { index, value ->
@@ -1525,7 +1521,7 @@ private fun HabitHeatmapCard() {
                                 .background(AccentMint.copy(alpha = 0.16f + value * 0.74f))
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(weekLabels[index], color = TextSecondary, style = MaterialTheme.typography.labelMedium)
+                        Text(weekLabels[index], color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -1557,8 +1553,8 @@ private fun ThemeSelectionCard(
                     Icon(Icons.Rounded.Palette, contentDescription = null, tint = AccentPurple)
                 }
                 Column {
-                    Text("Тема застосунку", fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text("Вибір зберігається локально на телефоні", color = TextSecondary)
+                    Text("Тема застосунку", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Вибір зберігається локально на телефоні", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             FlowRow(
@@ -1580,7 +1576,7 @@ private fun ThemeSelectionCard(
                         label = { Text(label) },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = if (themeMode == mode) {
-                                PrimaryBlue.copy(alpha = 0.18f)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                             } else {
                                 MaterialTheme.colorScheme.surface
                             }
@@ -1607,11 +1603,11 @@ private fun StorageStatusCard() {
                 text = "Локальне збереження",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "Задачі, стан таймера, обрана тема та активні модулі автоматично записуються в пам'ять телефона.",
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
             Surface(shape = CircleShape, color = AccentMint.copy(alpha = 0.18f)) {
@@ -1644,7 +1640,7 @@ private fun ModulePanelCard(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             items.forEachIndexed { index, item ->
                 Row(
@@ -1662,12 +1658,12 @@ private fun ModulePanelCard(
                             .background(if (item.enabled) AccentRose.copy(alpha = 0.18f) else AccentMint.copy(alpha = 0.18f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(item.icon, contentDescription = item.title, tint = TextPrimary)
+                        Icon(item.icon, contentDescription = item.title, tint = MaterialTheme.colorScheme.onSurface)
                     }
                     Box(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(end = 70.dp)) {
-                            Text(item.title, color = TextPrimary, fontWeight = FontWeight.SemiBold)
-                            Text(item.subtitle, color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                            Text(item.title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+                            Text(item.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                         }
                         Switch(
                             checked = item.enabled,
@@ -1677,7 +1673,7 @@ private fun ModulePanelCard(
                     }
                 }
                 if (index != items.lastIndex) {
-                    HorizontalDivider(color = BorderSoft)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                 }
             }
         }
@@ -1698,17 +1694,17 @@ private fun PreferenceCard() {
                 text = "Максимум вкладок у нижній навігації",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "5",
-                color = PrimaryBlue,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 34.sp,
                 fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = "Якщо модулів стане більше, їх можна тримати у вкладці \"Ще\" без перевантаження головного екрана.",
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -1770,7 +1766,7 @@ private fun NewTaskSheet(
                 text = "Нова задача",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             OutlinedTextField(
                 value = title,
@@ -1790,7 +1786,7 @@ private fun NewTaskSheet(
                 text = "Квадрант",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -1819,7 +1815,7 @@ private fun NewTaskSheet(
                 text = "Дедлайн",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button(onClick = { datePickerDialog.show() }) {
@@ -1845,7 +1841,7 @@ private fun NewTaskSheet(
                 text = "Повторення",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -1861,7 +1857,7 @@ private fun NewTaskSheet(
                         label = { Text(label) },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = if (recurringMode == value) {
-                                PrimaryBlue.copy(alpha = 0.24f)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
                             } else {
                                 MaterialTheme.colorScheme.surface
                             }
