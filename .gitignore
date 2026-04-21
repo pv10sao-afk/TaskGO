@@ -1,13 +1,13 @@
-*.iml
+# Gradle
 .gradle/
-.gradle-home/
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/build
-/captures
-/.externalNativeBuild
-/.cxx
-app/build
+build/
+**/build/
+
+# Android Studio
+.idea/
+*.iml
+local.properties
+
+# Keystore
+*.jks
+*.keystore

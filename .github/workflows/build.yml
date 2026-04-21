@@ -1,39 +1,44 @@
-name: Android Build 🚀
+name: Build Debug APK
 
-# Запускати збірку кожного разу, коли ти пушиш код у гілку main або master
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:   # дозволяє запускати вручну з GitHub UI
 
 jobs:
   build:
-    # Використовуємо безкоштовний сервер на Linux (він працює швидше за Windows)
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Завантажуємо твій код на сервер
-    - name: Отримання коду
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # 2. Встановлюємо правильну Java 17
-    - name: Налаштування Java 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    # 3. Даємо права на запуск системи збірки Gradle (для Linux це обов'язково)
-    - name: Права для Gradle
-      run: chmod +x gradlew
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
 
-    # 4. ТА САМА КОМАНДА: Збираємо APK!
-    - name: Збірка APK
-      run: ./gradlew assembleDebug
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-    # 5. Забираємо готовий файл і прикріплюємо його до сторінки на GitHub
-    - name: Збереження APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: My-Game-APK
-        path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
