@@ -196,15 +196,23 @@ private fun HabitsScreen(
     onToggleDate: (Int, String) -> Unit
 ) {
     var newHabitName by rememberSaveable { mutableStateOf("") }
-    
     val past7Days = remember {
         val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val displayFormat = SimpleDateFormat("EE", Locale.getDefault())
-        val days = mutableListOf<Pair<String, String>>()
+        val dayOfWeekFormat = SimpleDateFormat("EE", Locale.getDefault())
+        val dayOfMonthFormat = SimpleDateFormat("d", Locale.getDefault())
+        
+        class HabitDay(val dateStr: String, val dayOfWeek: String, val dayOfMonth: String, val isToday: Boolean)
+        
+        val days = mutableListOf<HabitDay>()
         for (i in 6 downTo 0) {
             val cal = Calendar.getInstance()
             cal.add(Calendar.DAY_OF_YEAR, -i)
-            days.add(format.format(cal.time) to displayFormat.format(cal.time))
+            days.add(HabitDay(
+                format.format(cal.time),
+                dayOfWeekFormat.format(cal.time),
+                dayOfMonthFormat.format(cal.time),
+                i == 0
+            ))
         }
         days
     }
@@ -282,19 +290,26 @@ private fun HabitsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        past7Days.forEach { (dateStr, displayStr) ->
-                            val isCompleted = habit.completedDates.contains(dateStr)
+                        past7Days.forEach { dayInfo ->
+                            val isCompleted = habit.completedDates.contains(dayInfo.dateStr)
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = dayInfo.dayOfWeek.take(3).uppercase(),
+                                    fontSize = 11.sp,
+                                    fontWeight = if (dayInfo.isToday) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (dayInfo.isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Box(
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
-                                        .background(if (isCompleted) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                        .clickable { onToggleDate(habit.id, dateStr) },
+                                        .background(if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                        .clickable { onToggleDate(habit.id, dayInfo.dateStr) },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = displayStr.take(1).uppercase(),
+                                        text = dayInfo.dayOfMonth,
                                         color = if (isCompleted) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontWeight = FontWeight.Bold
                                     )

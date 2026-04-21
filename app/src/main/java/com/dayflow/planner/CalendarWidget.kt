@@ -61,6 +61,7 @@ class CalendarWidget : AppWidgetProvider() {
             val prevIntent = Intent(context, CalendarWidget::class.java).apply {
                 action = "com.dayflow.planner.ACTION_PREV_MONTH"
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                data = android.net.Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
             }
             views.setOnClickPendingIntent(R.id.widget_calendar_prev, PendingIntent.getBroadcast(
                 context, id * 2, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
@@ -69,6 +70,7 @@ class CalendarWidget : AppWidgetProvider() {
             val nextIntent = Intent(context, CalendarWidget::class.java).apply {
                 action = "com.dayflow.planner.ACTION_NEXT_MONTH"
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                data = android.net.Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
             }
             views.setOnClickPendingIntent(R.id.widget_calendar_next, PendingIntent.getBroadcast(
                 context, id * 2 + 1, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
@@ -83,6 +85,7 @@ class CalendarWidget : AppWidgetProvider() {
             // GridView Service
             val gridIntent = Intent(context, CalendarWidgetService::class.java).apply {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                data = android.net.Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
             }
             views.setRemoteAdapter(R.id.widget_calendar_grid, gridIntent)
 
@@ -110,11 +113,15 @@ class CalendarWidgetFactory(private val context: Context, intent: Intent) : Remo
         val monthOffset = prefs.getInt("month_offset", 0)
 
         // Run blocking for state parsing
-        val taskDates = runBlocking {
-            PlannerStore(context).appState.first().tasks.filter { !it.completed && it.deadlineMillis != null }.map {
-                val cal = Calendar.getInstance().apply { timeInMillis = it.deadlineMillis!! }
-                Triple(cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH), cal.get(Calendar.YEAR))
-            }.toSet()
+        val taskDates = try {
+            runBlocking {
+                PlannerStore(context).appState.first().tasks.filter { !it.completed && it.deadlineMillis != null }.map {
+                    val cal = Calendar.getInstance().apply { timeInMillis = it.deadlineMillis!! }
+                    Triple(cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH), cal.get(Calendar.YEAR))
+                }.toSet()
+            }
+        } catch (e: Exception) {
+            emptySet()
         }
 
         val cal = Calendar.getInstance()
@@ -190,7 +197,11 @@ class CalendarWidgetFactory(private val context: Context, intent: Intent) : Remo
         return views
     }
 
-    override fun getLoadingView(): RemoteViews? = null
+    override fun getLoadingView(): RemoteViews? {
+        val views = RemoteViews(context.packageName, R.layout.widget_calendar_cell)
+        views.setTextViewText(R.id.widget_cal_cell_text, "")
+        return views
+    }
     override fun getViewTypeCount(): Int = 1
     override fun getItemId(position: Int): Long = position.toLong()
     override fun hasStableIds(): Boolean = false
