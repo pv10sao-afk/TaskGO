@@ -105,6 +105,9 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import java.text.SimpleDateFormat
+import java.util.Locale
+import com.dayflow.planner.data.PlannerHabit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dayflow.planner.data.FocusTimerState
@@ -491,7 +494,10 @@ private fun PlannerRoot() {
                 }
             },
             onStartPauseTimer = {
-                scope.launch { plannerStore.toggleTimer() }
+                scope.launch { 
+                    if (appState.focusTimer.isRunning) plannerStore.pauseTimer(nowMillis)
+                    else plannerStore.startTimer(nowMillis)
+                }
             },
             onResetTimer = {
                 scope.launch { plannerStore.resetTimer() }
