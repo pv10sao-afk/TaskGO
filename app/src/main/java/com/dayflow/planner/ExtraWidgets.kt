@@ -51,6 +51,26 @@ class FocusWidget : AppWidgetProvider() {
         ids.forEach { id -> updateFocus(context, manager, id) }
     }
 
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == "com.dayflow.planner.ACTION_FOCUS_TOGGLE") {
+            CoroutineScope(Dispatchers.IO).launch {
+                val store = PlannerStore(context.applicationContext)
+                val state = store.appState.first()
+                val timer = state.focusTimer
+                val now = System.currentTimeMillis()
+                
+                if (timer.remainingAt(now) <= 0) {
+                    store.completeTimerSession()
+                } else if (timer.isRunning) {
+                    store.pauseTimer(now)
+                } else {
+                    store.startTimer(now)
+                }
+            }
+        }
+    }
+
     companion object {
         fun updateFocus(context: Context, manager: AppWidgetManager, id: Int) {
             val views = RemoteViews(context.packageName, R.layout.widget_focus)
@@ -59,6 +79,15 @@ class FocusWidget : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(android.R.id.content, tap)
+
+            val toggleIntent = Intent(context, FocusWidget::class.java).apply {
+                action = "com.dayflow.planner.ACTION_FOCUS_TOGGLE"
+            }
+            val toggleTap = PendingIntent.getBroadcast(
+                context, 0, toggleIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_focus_btn_toggle, toggleTap)
 
             CoroutineScope(Dispatchers.IO).launch {
                 val state = PlannerStore(context.applicationContext).appState.first()
@@ -77,13 +106,15 @@ class FocusWidget : AppWidgetProvider() {
                 }
 
                 if (timer.isRunning) {
+                    views.setImageViewResource(R.id.widget_focus_btn_toggle, android.R.drawable.ic_media_pause)
                     val baseMillis = android.os.SystemClock.elapsedRealtime() + remaining
                     views.setChronometer(R.id.widget_focus_time_chronometer, baseMillis, "%s", true)
                     views.setViewVisibility(R.id.widget_focus_time_chronometer, android.view.View.VISIBLE)
                     views.setViewVisibility(R.id.widget_focus_time_text, android.view.View.GONE)
                 } else {
+                    views.setImageViewResource(R.id.widget_focus_btn_toggle, android.R.drawable.ic_media_play)
                     views.setTextViewText(R.id.widget_focus_time_text, label)
-                    views.setChronometer(R.id.widget_focus_time_chronometer, 0L, "%s", false) // Stop if it was running
+                    views.setChronometer(R.id.widget_focus_time_chronometer, 0L, "%s", false)
                     views.setViewVisibility(R.id.widget_focus_time_text, android.view.View.VISIBLE)
                     views.setViewVisibility(R.id.widget_focus_time_chronometer, android.view.View.GONE)
                 }

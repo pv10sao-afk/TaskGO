@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_task_item_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:background="#15FFFFFF"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:id="@+id/widget_task_checkbox"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@android:drawable/checkbox_off_background"
+        android:tint="#8899AA" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="10dp">
+        
+        <TextView
+            android:id="@+id/widget_task_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Приклад задачі"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/widget_task_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Час..."
+            android:textColor="#5DE6A4"
+            android:textSize="10sp"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+    
+</LinearLayout>

@@ -60,6 +60,13 @@ class PlannerStore(private val context: Context) {
         state.copy(tasks = state.tasks.filter { it.id != taskId })
     }
 
+    suspend fun toggleTaskCompleted(taskId: String) = updateState { state ->
+        val id = taskId.toIntOrNull() ?: return@updateState state
+        state.copy(
+            tasks = state.tasks.map { if (it.id == id) it.copy(completed = !it.completed) else it }
+        )
+    }
+
     suspend fun addTask(
         title: String,
         group: String,
@@ -181,7 +188,9 @@ class PlannerStore(private val context: Context) {
         val widgetClasses = listOf(
             com.dayflow.planner.PlannerWidget::class.java,
             com.dayflow.planner.MiniWidget::class.java,
-            com.dayflow.planner.FocusWidget::class.java
+            com.dayflow.planner.FocusWidget::class.java,
+            com.dayflow.planner.TaskListWidget::class.java,
+            com.dayflow.planner.CalendarWidget::class.java
         )
         for (clazz in widgetClasses) {
             val ids = manager.getAppWidgetIds(android.content.ComponentName(context, clazz))
