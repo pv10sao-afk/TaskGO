@@ -47,6 +47,8 @@ public class Unit implements IDamageable {
     private static final Paint HP_FG_PAINT   = new Paint(Paint.ANTI_ALIAS_FLAG);
     private static final Paint FREEZE_PAINT  = new Paint(Paint.ANTI_ALIAS_FLAG);
     private static final Paint AOE_PAINT     = new Paint(Paint.ANTI_ALIAS_FLAG);
+    // Minimal separation between units to avoid passing-through collisions
+    private static final float MIN_SEPARATION = 6f;
 
     static {
         OUTLINE_PAINT.setStyle(Paint.Style.STROKE);
@@ -115,8 +117,27 @@ public class Unit implements IDamageable {
             }
             if (target.isDead()) target = null;
         } else {
+            // Basic collision-avoidance: prevent units from passing through each other
             float dir = enemy ? 1f : -1f;
-            y += dir * type.speed * dt;
+            float nx = x;
+            float ny = y + dir * type.speed * dt;
+            // Resolve simple inter-unit collisions in the vicinity
+            for (Unit u : allUnits) {
+                if (u == this || u.isDead()) continue;
+                float dx = nx - u.getX();
+                float dy = ny - u.getY();
+                float dist = (float) Math.sqrt(dx * dx + dy * dy);
+                if (dist < MIN_SEPARATION && dist > 0f) {
+                    float push = MIN_SEPARATION - dist;
+                    nx += (dx / dist) * push * 0.5f;
+                    ny += (dy / dist) * push * 0.5f;
+                } else if (dist == 0f) {
+                    // Extremely unlikely, but nudge slightly
+                    nx += 0.5f * (enemy ? 1 : -1);
+                }
+            }
+            x = nx;
+            y = ny;
         }
     }
 
@@ -161,11 +182,23 @@ public class Unit implements IDamageable {
     private void acquireTarget(List<Unit> allUnits,
                                MainBase playerBase,
                                MainBase enemyBase) {
+        // If we already have a live target within range, keep attacking it.
         if (target != null && !target.isDead()) {
             if (distanceTo(target) <= type.range) return;
             else target = null;
         }
 
+        MainBase targetBase = enemy ? playerBase : enemyBase;
+        float baseDist = distanceTo(targetBase);
+
+        // Priority: attack the base if it is within attack range. This ensures
+        // enemies stop in front of the tower/base and consistently threaten it.
+        if (baseDist <= type.range) {
+            target = targetBase;
+            return;
+        }
+
+        // Otherwise, target the closest hostile unit within range.
         IDamageable closest    = null;
         float       closestDist = Float.MAX_VALUE;
 
@@ -176,12 +209,6 @@ public class Unit implements IDamageable {
                 closestDist = d;
                 closest     = u;
             }
-        }
-
-        MainBase targetBase = enemy ? playerBase : enemyBase;
-        float baseDist = distanceTo(targetBase);
-        if (baseDist <= type.range && baseDist < closestDist) {
-            closest = targetBase;
         }
 
         target = closest;
