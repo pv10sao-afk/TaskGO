@@ -60,19 +60,13 @@ class PlannerStore(private val context: Context) {
         state.copy(tasks = state.tasks.filter { it.id != taskId })
     }
 
-    suspend fun toggleTaskCompleted(taskId: String) = updateState { state ->
-        val id = taskId.toIntOrNull() ?: return@updateState state
-        state.copy(
-            tasks = state.tasks.map { if (it.id == id) it.copy(completed = !it.completed) else it }
-        )
-    }
-
     suspend fun addTask(
         title: String,
         group: String,
         quadrant: Int,
         deadlineMillis: Long?,
-        recurringMode: String
+        recurringMode: String,
+        note: String
     ) = updateState { state ->
         val nextId = (state.tasks.maxOfOrNull { it.id } ?: 0) + 1
         val task = PlannerTask(
@@ -81,11 +75,64 @@ class PlannerStore(private val context: Context) {
             group = group,
             deadlineMillis = deadlineMillis,
             recurringMode = recurringMode,
-            note = "",
+            note = note,
             quadrant = quadrant,
             completed = false
         )
         state.copy(tasks = listOf(task) + state.tasks)
+    }
+
+    suspend fun editTask(
+        id: Int,
+        title: String,
+        group: String,
+        quadrant: Int,
+        deadlineMillis: Long?,
+        recurringMode: String,
+        note: String
+    ) = updateState { state ->
+        val updatedTasks = state.tasks.map { task ->
+            if (task.id == id) {
+                task.copy(
+                    title = title,
+                    group = group,
+                    quadrant = quadrant,
+                    deadlineMillis = deadlineMillis,
+                    recurringMode = recurringMode,
+                    note = note
+                )
+            } else {
+                task
+            }
+        }
+        state.copy(tasks = updatedTasks)
+    }
+
+    suspend fun addHabit(title: String) = updateState { state ->
+        val nextId = (state.habits.maxOfOrNull { it.id } ?: 0) + 1
+        val habit = PlannerHabit(id = nextId, title = title, completedDates = emptyList())
+        state.copy(habits = state.habits + habit)
+    }
+
+    suspend fun deleteHabit(habitId: Int) = updateState { state ->
+        state.copy(habits = state.habits.filter { it.id != habitId })
+    }
+
+    suspend fun toggleHabitDate(habitId: Int, date: String) = updateState { state ->
+        state.copy(
+            habits = state.habits.map { habit ->
+                if (habit.id == habitId) {
+                    val newDates = if (habit.completedDates.contains(date)) {
+                        habit.completedDates - date
+                    } else {
+                        habit.completedDates + date
+                    }
+                    habit.copy(completedDates = newDates)
+                } else {
+                    habit
+                }
+            }
+        )
     }
 
     suspend fun setThemeMode(themeMode: AppThemeMode) = updateState { state ->
@@ -209,6 +256,7 @@ class PlannerStore(private val context: Context) {
 
         fun defaultState(): PlannerState = PlannerState(
             tasks = defaultTasks(),
+            habits = emptyList(),
             themeMode = AppThemeMode.SYSTEM,
             selectedTabName = "Today",
             modules = defaultModules(),
@@ -226,10 +274,17 @@ class PlannerStore(private val context: Context) {
 
 data class PlannerState(
     val tasks: List<PlannerTask>,
+    val habits: List<PlannerHabit>,
     val themeMode: AppThemeMode,
     val selectedTabName: String,
     val modules: List<ModulePreference>,
     val focusTimer: FocusTimerState
+)
+
+data class PlannerHabit(
+    val id: Int,
+    val title: String,
+    val completedDates: List<String>
 )
 
 data class PlannerTask(
@@ -300,6 +355,17 @@ private object PlannerStateJson {
                     })
                 }
             })
+            put("habits", JSONArray().apply {
+                state.habits.forEach { habit ->
+                    put(JSONObject().apply {
+                        put("id", habit.id)
+                        put("title", habit.title)
+                        put("completedDates", JSONArray().apply {
+                            habit.completedDates.forEach { put(it) }
+                        })
+                    })
+                }
+            })
             put("modules", JSONArray().apply {
                 state.modules.forEach { module ->
                     put(JSONObject().apply {
@@ -330,6 +396,7 @@ private object PlannerStateJson {
 
             PlannerState(
                 tasks = json.optJSONArray("tasks")?.toTaskList().orEmpty().ifEmpty { defaultState.tasks },
+                habits = json.optJSONArray("habits")?.toHabitList() ?: defaultState.habits,
                 themeMode = json.optString("themeMode")
                     .takeIf { it.isNotBlank() }
                     ?.let(::parseThemeMode)
@@ -359,6 +426,29 @@ private object PlannerStateJson {
                         note = item.optString("note"),
                         quadrant = item.optInt("quadrant", 2),
                         completed = item.optBoolean("completed")
+                    )
+                )
+            }
+        }
+    }
+
+    private fun JSONArray.toHabitList(): List<PlannerHabit> {
+        return buildList {
+            for (index in 0 until length()) {
+                val item = optJSONObject(index) ?: continue
+                val datesArray = item.optJSONArray("completedDates")
+                val datesList = buildList {
+                    if (datesArray != null) {
+                        for (i in 0 until datesArray.length()) {
+                            add(datesArray.optString(i))
+                        }
+                    }
+                }
+                add(
+                    PlannerHabit(
+                        id = item.optInt("id"),
+                        title = item.optString("title"),
+                        completedDates = datesList
                     )
                 )
             }

@@ -101,6 +101,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -150,6 +152,8 @@ private enum class PlannerTab(
     Calendar("Календар", Icons.Rounded.CalendarMonth),
     Matrix("Матриця", Icons.Rounded.GridView),
     Focus("Фокус", Icons.Rounded.Timer),
+    Habits("Звички", Icons.Rounded.AutoGraph),
+    Search("Пошук", Icons.Rounded.Search),
     More("Ще", Icons.Rounded.MoreHoriz)
 }
 
@@ -182,6 +186,217 @@ private data class ModuleUiItem(
 )
 
 @Composable
+private fun HabitsScreen(
+    habits: List<PlannerHabit>,
+    onAddHabit: (String) -> Unit,
+    onDeleteHabit: (Int) -> Unit,
+    onToggleDate: (Int, String) -> Unit
+) {
+    var newHabitName by rememberSaveable { mutableStateOf("") }
+    
+    val past7Days = remember {
+        val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val displayFormat = SimpleDateFormat("EE", Locale.getDefault())
+        val days = mutableListOf<Pair<String, String>>()
+        for (i in 6 downTo 0) {
+            val cal = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_YEAR, -i)
+            days.add(format.format(cal.time) to displayFormat.format(cal.time))
+        }
+        days
+    }
+
+    LazyColumn(
+        contentPadding = PaddingValues(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            HeaderBlock(
+                title = "Звички",
+                subtitle = "Відстежуй свій прогрес щодня"
+            )
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = newHabitName,
+                        onValueChange = { newHabitName = it },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("Нова звичка") },
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    IconButton(
+                        onClick = {
+                            if (newHabitName.isNotBlank()) {
+                                onAddHabit(newHabitName.trim())
+                                newHabitName = ""
+                            }
+                        },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape)
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = "Додати", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                }
+            }
+        }
+
+        if (habits.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Text("У вас поки немає звичок.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        items(habits) { habit ->
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(habit.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        IconButton(onClick = { onDeleteHabit(habit.id) }) {
+                            Icon(Icons.Rounded.Delete, contentDescription = "Видалити", tint = AccentRose)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        past7Days.forEach { (dateStr, displayStr) ->
+                            val isCompleted = habit.completedDates.contains(dateStr)
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isCompleted) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                        .clickable { onToggleDate(habit.id, dateStr) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = displayStr.take(1).uppercase(),
+                                        color = if (isCompleted) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        item { Spacer(modifier = Modifier.height(72.dp)) }
+    }
+}
+
+@Composable
+private fun SearchScreen(
+    tasks: List<PlannerTask>,
+    nowMillis: Long,
+    onToggleTask: (Int) -> Unit,
+    onDeleteTask: (Int) -> Unit,
+    onEditTask: (PlannerTask) -> Unit
+) {
+    var query by rememberSaveable { mutableStateOf("") }
+    var sortBy by rememberSaveable { mutableStateOf("date") }
+
+    val filteredTasks = remember(tasks, query, sortBy) {
+        val q = query.trim().lowercase()
+        val filtered = if (q.isEmpty()) {
+            tasks
+        } else {
+            tasks.filter {
+                it.title.lowercase().contains(q) ||
+                it.group.lowercase().contains(q) ||
+                it.note.lowercase().contains(q)
+            }
+        }
+        when (sortBy) {
+            "date" -> filtered.sortedWith(compareBy<PlannerTask> { it.completed }.thenBy { it.deadlineMillis ?: Long.MAX_VALUE })
+            "priority" -> filtered.sortedWith(compareBy<PlannerTask> { it.completed }.thenBy { it.quadrant })
+            "group" -> filtered.sortedWith(compareBy<PlannerTask> { it.completed }.thenBy { it.group })
+            else -> filtered
+        }
+    }
+
+    LazyColumn(
+        contentPadding = PaddingValues(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            HeaderBlock(
+                title = "Пошук та фільтри",
+                subtitle = "Знайдіть потрібну задачу серед усіх"
+            )
+        }
+        item {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Пошук...") },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                singleLine = true
+            )
+        }
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(
+                    "date" to "За датою",
+                    "priority" to "За пріоритетом",
+                    "group" to "За групою"
+                ).forEach { (key, label) ->
+                    AssistChip(
+                        onClick = { sortBy = key },
+                        label = { Text(label) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = if (sortBy == key) MaterialTheme.colorScheme.primary.copy(alpha = 0.24f) else MaterialTheme.colorScheme.surface
+                        )
+                    )
+                }
+            }
+        }
+        if (filteredTasks.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Text("Задач не знайдено", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        items(filteredTasks) { task ->
+            TaskCard(
+                task = task,
+                nowMillis = nowMillis,
+                onToggle = { onToggleTask(task.id) },
+                onDelete = { onDeleteTask(task.id) },
+                onEdit = { onEditTask(task) }
+            )
+        }
+        item { Spacer(modifier = Modifier.height(72.dp)) }
+    }
+}
+
+@Composable
 private fun PlannerRoot() {
     val context = LocalContext.current
     val plannerStore = remember { PlannerStore(context.applicationContext) }
@@ -196,6 +411,8 @@ private fun PlannerRoot() {
             PlannerTab.Calendar -> moduleStates[ModuleKey.CALENDAR] == false
             PlannerTab.Matrix   -> moduleStates[ModuleKey.MATRIX] == false
             PlannerTab.Focus    -> moduleStates[ModuleKey.FOCUS] == false
+            PlannerTab.Habits   -> moduleStates[ModuleKey.HABITS] == false
+            PlannerTab.Search   -> moduleStates[ModuleKey.SEARCH] == false
             else -> false
         }
         if (currentTabDisabled) {
@@ -203,6 +420,7 @@ private fun PlannerRoot() {
         }
     }
     var showNewTaskSheet by rememberSaveable { mutableStateOf(false) }
+    var taskToEdit by remember { mutableStateOf<PlannerTask?>(null) }
     // Ticks every second always – used for deadline countdowns in TaskCards
     val tickMillis by produceState(initialValue = System.currentTimeMillis()) {
         while (true) {
@@ -249,43 +467,57 @@ private fun PlannerRoot() {
                     plannerStore.deleteTask(taskId)
                 }
             },
-            onAddTask = { title, group, quadrant, deadlineMillis, recurringMode ->
-                scope.launch {
-                    plannerStore.addTask(title, group, quadrant, deadlineMillis, recurringMode)
-                }
+            onEditTask = { task ->
+                taskToEdit = task
+                showNewTaskSheet = true
             },
-            onToggleModule = { moduleKey ->
+            onSaveTask = { title, group, quadrant, deadlineMillis, recurringMode, note ->
                 scope.launch {
-                    plannerStore.toggleModule(moduleKey)
-                }
-            },
-            onThemeChange = { themeMode ->
-                scope.launch {
-                    plannerStore.setThemeMode(themeMode)
-                }
-            },
-            onStartPauseTimer = {
-                scope.launch {
-                    if (appState.focusTimer.isRunning) {
-                        plannerStore.pauseTimer(nowMillis)
+                    if (taskToEdit != null) {
+                        plannerStore.editTask(taskToEdit!!.id, title, group, quadrant, deadlineMillis, recurringMode, note)
                     } else {
-                        plannerStore.startTimer(nowMillis)
+                        plannerStore.addTask(title, group, quadrant, deadlineMillis, recurringMode, note)
                     }
                 }
             },
+            onToggleModule = { key ->
+                scope.launch {
+                    plannerStore.toggleModule(key)
+                }
+            },
+            onThemeChange = { mode ->
+                scope.launch {
+                    plannerStore.setThemeMode(mode)
+                }
+            },
+            onStartPauseTimer = {
+                scope.launch { plannerStore.toggleTimer() }
+            },
             onResetTimer = {
-                scope.launch {
-                    plannerStore.resetTimer()
-                }
+                scope.launch { plannerStore.resetTimer() }
             },
-            onSetTimerDuration = { minutes ->
-                scope.launch {
-                    plannerStore.setTimerDuration(minutes)
-                }
+            onSetTimerDuration = { duration ->
+                scope.launch { plannerStore.setTimerDuration(duration) }
             },
-            showNewTaskSheet = showNewTaskSheet,
-            onShowNewTaskSheet = { showNewTaskSheet = true },
-            onDismissNewTaskSheet = { showNewTaskSheet = false }
+            onAddHabit = { title ->
+                scope.launch { plannerStore.addHabit(title) }
+            },
+            onDeleteHabit = { id ->
+                scope.launch { plannerStore.deleteHabit(id) }
+            },
+            onToggleHabitDate = { id, dateStr ->
+                scope.launch { plannerStore.toggleHabitDate(id, dateStr) }
+            },
+            showEditTaskSheet = showNewTaskSheet,
+            taskToEdit = taskToEdit,
+            onShowEditTaskSheet = { 
+                taskToEdit = null
+                showNewTaskSheet = true 
+            },
+            onDismissEditTaskSheet = { 
+                showNewTaskSheet = false 
+                taskToEdit = null
+            }
         )
     }
 }
@@ -299,15 +531,20 @@ private fun DayFlowApp(
     onSelectTab: (PlannerTab) -> Unit,
     onToggleTask: (Int) -> Unit,
     onDeleteTask: (Int) -> Unit,
-    onAddTask: (String, String, Int, Long?, String) -> Unit,
+    onEditTask: (PlannerTask) -> Unit,
+    onSaveTask: (String, String, Int, Long?, String, String) -> Unit,
     onToggleModule: (ModuleKey) -> Unit,
     onThemeChange: (AppThemeMode) -> Unit,
     onStartPauseTimer: () -> Unit,
     onResetTimer: () -> Unit,
     onSetTimerDuration: (Int) -> Unit,
-    showNewTaskSheet: Boolean,
-    onShowNewTaskSheet: () -> Unit,
-    onDismissNewTaskSheet: () -> Unit
+    onAddHabit: (String) -> Unit,
+    onDeleteHabit: (Int) -> Unit,
+    onToggleHabitDate: (Int, String) -> Unit,
+    showEditTaskSheet: Boolean,
+    taskToEdit: PlannerTask?,
+    onShowEditTaskSheet: () -> Unit,
+    onDismissEditTaskSheet: () -> Unit
 ) {
     Scaffold(
         containerColor = Color.Transparent,
@@ -320,7 +557,7 @@ private fun DayFlowApp(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onShowNewTaskSheet,
+                onClick = onShowEditTaskSheet,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.background
             ) {
@@ -348,18 +585,38 @@ private fun DayFlowApp(
                     timerLabel = formatTimer(appState.focusTimer.remainingAt(nowMillis)),
                     nowMillis = tickMillis,
                     onToggleTask = onToggleTask,
-                    onDeleteTask = onDeleteTask
+                    onDeleteTask = onDeleteTask,
+                    onEditTask = onEditTask
                 )
 
-                PlannerTab.Calendar -> CalendarScreen(tasks = appState.tasks)
+                PlannerTab.Calendar -> CalendarScreen(
+                    tasks = appState.tasks,
+                    onToggleTask = onToggleTask,
+                    onDeleteTask = onDeleteTask,
+                    onEditTask = onEditTask
+                )
                 PlannerTab.Matrix -> MatrixScreen(tasks = appState.tasks)
                 PlannerTab.Focus -> FocusScreen(
+                    tasks = appState.tasks,
                     timerState = appState.focusTimer,
                     nowMillis = nowMillis,
                     habitsEnabled = appState.modules.find { it.key == ModuleKey.HABITS }?.enabled == true,
                     onStartPause = onStartPauseTimer,
                     onReset = onResetTimer,
                     onSelectDuration = onSetTimerDuration
+                )
+                PlannerTab.Habits -> HabitsScreen(
+                    habits = appState.habits,
+                    onAddHabit = onAddHabit,
+                    onDeleteHabit = onDeleteHabit,
+                    onToggleDate = onToggleHabitDate
+                )
+                PlannerTab.Search -> SearchScreen(
+                    tasks = appState.tasks,
+                    nowMillis = tickMillis,
+                    onToggleTask = onToggleTask,
+                    onDeleteTask = onDeleteTask,
+                    onEditTask = onEditTask
                 )
 
                 PlannerTab.More -> MoreScreen(
@@ -372,12 +629,13 @@ private fun DayFlowApp(
         }
     }
 
-    if (showNewTaskSheet) {
-        NewTaskSheet(
-            onDismiss = onDismissNewTaskSheet,
-            onAddTask = { title, group, quadrant, deadlineMillis, recurringMode ->
-                onAddTask(title, group, quadrant, deadlineMillis, recurringMode)
-                onDismissNewTaskSheet()
+    if (showEditTaskSheet) {
+        TaskEditSheet(
+            taskToEdit = taskToEdit,
+            onDismiss = onDismissEditTaskSheet,
+            onSaveTask = { title, group, quadrant, deadlineMillis, recurringMode, note ->
+                onSaveTask(title, group, quadrant, deadlineMillis, recurringMode, note)
+                onDismissEditTaskSheet()
             }
         )
     }
@@ -397,6 +655,8 @@ private fun PlannerBottomBar(
                 PlannerTab.Calendar -> states[ModuleKey.CALENDAR] != false
                 PlannerTab.Matrix -> states[ModuleKey.MATRIX] != false
                 PlannerTab.Focus -> states[ModuleKey.FOCUS] != false
+                PlannerTab.Habits -> states[ModuleKey.HABITS] != false
+                PlannerTab.Search -> states[ModuleKey.SEARCH] == true
                 PlannerTab.More -> true
             }
         }
@@ -423,7 +683,8 @@ private fun TodayScreen(
     timerLabel: String,
     nowMillis: Long,
     onToggleTask: (Int) -> Unit,
-    onDeleteTask: (Int) -> Unit
+    onDeleteTask: (Int) -> Unit,
+    onEditTask: (PlannerTask) -> Unit
 ) {
     val categories = remember(tasks) { buildCategories(tasks) }
 
@@ -458,7 +719,8 @@ private fun TodayScreen(
                 task = task, 
                 nowMillis = nowMillis, 
                 onToggle = { onToggleTask(task.id) },
-                onDelete = { onDeleteTask(task.id) }
+                onDelete = { onDeleteTask(task.id) },
+                onEdit = { onEditTask(task) }
             )
         }
 
@@ -496,7 +758,12 @@ private fun TodayScreen(
 }
 
 @Composable
-private fun CalendarScreen(tasks: List<PlannerTask>) {
+private fun CalendarScreen(
+    tasks: List<PlannerTask>,
+    onToggleTask: (Int) -> Unit,
+    onDeleteTask: (Int) -> Unit,
+    onEditTask: (PlannerTask) -> Unit
+) {
     val monthNames = listOf("Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень")
     val today = remember { Calendar.getInstance() }
 
@@ -678,8 +945,9 @@ private fun CalendarScreen(tasks: List<PlannerTask>) {
             items(selectedTasks) { task ->
                 TaskCard(
                     task = task,
-                    onToggle = {},
-                    onDelete = null
+                    onToggle = { onToggleTask(task.id) },
+                    onDelete = { onDeleteTask(task.id) },
+                    onEdit = { onEditTask(task) }
                 )
             }
         }
@@ -733,6 +1001,7 @@ private fun MatrixScreen(tasks: List<PlannerTask>) {
 
 @Composable
 private fun FocusScreen(
+    tasks: List<PlannerTask>,
     timerState: FocusTimerState,
     nowMillis: Long,
     habitsEnabled: Boolean,
@@ -794,7 +1063,7 @@ private fun FocusScreen(
 
         if (habitsEnabled) {
             item {
-                HabitHeatmapCard()
+                WeeklyTasksHeatmapCard(tasks = tasks)
             }
         }
 
@@ -987,13 +1256,14 @@ private fun TaskCard(
     task: PlannerTask,
     nowMillis: Long = System.currentTimeMillis(),
     onToggle: () -> Unit,
-    onDelete: (() -> Unit)? = null
+    onDelete: (() -> Unit)? = null,
+    onEdit: () -> Unit = {}
 ) {
     Card(
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable { onEdit() }
     ) {
         Box(
             modifier = Modifier
@@ -1488,9 +1758,31 @@ private fun FocusHeroCard(
 }
 
 @Composable
-private fun HabitHeatmapCard() {
-    val weekLabels = listOf("П", "В", "С", "Ч", "П", "С", "Н")
-    val values = listOf(0.1f, 0.25f, 0.75f, 0.5f, 0.85f, 0.3f, 0.65f)
+private fun WeeklyTasksHeatmapCard(tasks: List<PlannerTask>) {
+    val daysLabels = remember { mutableListOf<String>() }
+    val values = remember(tasks) {
+        val today = Calendar.getInstance()
+        val scores = mutableListOf<Float>()
+        
+        for (i in 6 downTo 0) {
+            val cal = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_YEAR, -i)
+            
+            val dayTasks = tasks.filter { task ->
+                if (task.deadlineMillis == null) return@filter false
+                val tc = Calendar.getInstance().apply { timeInMillis = task.deadlineMillis }
+                tc.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR) &&
+                tc.get(Calendar.YEAR) == cal.get(Calendar.YEAR)
+            }
+            
+            val completionRate = if (dayTasks.isEmpty()) 0f else dayTasks.count { it.completed }.toFloat() / dayTasks.size
+            scores.add(completionRate)
+            
+            val labels = listOf("Н", "П", "В", "С", "Ч", "П", "С")
+            daysLabels.add(labels[cal.get(Calendar.DAY_OF_WEEK) - 1])
+        }
+        scores
+    }
 
     Card(
         shape = RoundedCornerShape(32.dp),
@@ -1501,27 +1793,28 @@ private fun HabitHeatmapCard() {
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             Text(
-                text = "Теплова карта звички",
+                text = "Продуктивність тижня",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Поїсти фрукти",
+                text = "Виконані задачі за останні 7 днів",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 values.forEachIndexed { index, value ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val baseColor = if (value == 0f) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f) else AccentMint.copy(alpha = 0.16f + value * 0.84f)
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(AccentMint.copy(alpha = 0.16f + value * 0.74f))
+                                .background(baseColor)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(weekLabels[index], color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
+                        Text(daysLabels[index], color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -1712,16 +2005,18 @@ private fun PreferenceCard() {
 }
 
 @Composable
-private fun NewTaskSheet(
+private fun TaskEditSheet(
+    taskToEdit: PlannerTask? = null,
     onDismiss: () -> Unit,
-    onAddTask: (title: String, group: String, quadrant: Int, deadlineMillis: Long?, recurringMode: String) -> Unit
+    onSaveTask: (title: String, group: String, quadrant: Int, deadlineMillis: Long?, recurringMode: String, note: String) -> Unit
 ) {
     val context = LocalContext.current
-    var title by rememberSaveable { mutableStateOf("") }
-    var group by rememberSaveable { mutableStateOf("Сьогодні") }
-    var quadrant by rememberSaveable { mutableStateOf(2) }
-    var deadlineMillis by rememberSaveable { mutableStateOf<Long?>(null) }
-    var recurringMode by rememberSaveable { mutableStateOf("NONE") }
+    var title by rememberSaveable { mutableStateOf(taskToEdit?.title ?: "") }
+    var group by rememberSaveable { mutableStateOf(taskToEdit?.group ?: "Сьогодні") }
+    var note by rememberSaveable { mutableStateOf(taskToEdit?.note ?: "") }
+    var quadrant by rememberSaveable { mutableStateOf(taskToEdit?.quadrant ?: 2) }
+    var deadlineMillis by rememberSaveable { mutableStateOf<Long?>(taskToEdit?.deadlineMillis) }
+    var recurringMode by rememberSaveable { mutableStateOf(taskToEdit?.recurringMode ?: "NONE") }
 
     val datePickerDialog = remember {
         val cal = Calendar.getInstance()
@@ -1763,7 +2058,7 @@ private fun NewTaskSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Нова задача",
+                text = if (taskToEdit != null) "Редагувати задачу" else "Нова задача",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -1781,6 +2076,14 @@ private fun NewTaskSheet(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Розділ") },
                 singleLine = true
+            )
+            OutlinedTextField(
+                value = note,
+                onValueChange = { note = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Нотатки (необов'язково)") },
+                minLines = 2,
+                maxLines = 4
             )
             Text(
                 text = "Квадрант",
@@ -1876,16 +2179,17 @@ private fun NewTaskSheet(
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = {
-                        onAddTask(
+                        onSaveTask(
                             title.ifBlank { "Нова задача" },
                             group.ifBlank { "Сьогодні" },
                             quadrant,
                             deadlineMillis,
-                            recurringMode
+                            recurringMode,
+                            note
                         )
                     }
                 ) {
-                    Text("Додати")
+                    Text("Зберегти")
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))

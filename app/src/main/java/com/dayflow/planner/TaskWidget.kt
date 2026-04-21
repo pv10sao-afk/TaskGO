@@ -26,11 +26,12 @@ class TaskListWidget : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         if (intent.action == "com.dayflow.planner.ACTION_TOGGLE_TASK") {
-            val taskId = intent.getStringExtra("task_id") ?: return
+            val taskId = intent.getIntExtra("task_id", -1)
+            if (taskId == -1) return
             
             CoroutineScope(Dispatchers.IO).launch {
                 val store = PlannerStore(context.applicationContext)
-                store.toggleTaskCompleted(taskId)
+                store.toggleTask(taskId)
             }
         }
     }
