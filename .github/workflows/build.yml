@@ -15,120 +15,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Godot 4
-      uses: daid/godot-ci-action@v3
+    - name: Setup Godot
+      uses: dulvui/godot-android-export@v4
       with:
-        version: "4.2.2"
-        
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        java-version: "17"
-        
-    - name: Install Android SDK
-      uses: android-actions/setup-android@v2
-      
-    - name: Create export presets
-      run: |
-        mkdir -p ~/.local/share/godot/export_presets
-        cat > ~/.local/share/godot/export_presets/presets.cfg << 'EOF'
-        [preset.0]
-
-        name="Android"
-        platform="Android"
-        runnable=true
-        custom_features=""
-        export_filter="all_resources"
-        include_filter=""
-        exclude_filter=""
-        export_path="builds/android/android.apk"
-        encryption_pck_preset=0
-        encryption_pck_password=""
-        encryption_pck_path=""
-        encrypt_directory=false
-
-        [preset.0.options]
-
-        custom_template/debug=""
-        custom_template/release=""
-        architecture/armv7=true
-        architecture/arm64=true
-        architecture/x86_64=false
-        version/code=1
-        version/name="1.0"
-        package/unique_name="com.example.myproject"
-        package/suffix=""
-        package/version_code=1
-        package/version_name="1.0"
-        package/icon=""
-        package/rotate_flags=0
-        package/permissions=PACKAGE_USAGE_STATS
-        sdk/min_sdk=21
-        sdk/target_sdk=21
-        screen/landscape=true
-        screen/portrait=true
-        screen/support_small=true
-        screen/support_normal=true
-        screen/support_large=true
-        screen/support_xlarge=true
-        screen/any_orientation=true
-        input/gamepad=false
-        input/pointer_hover=false
-        input/touch=true
-        input/keyboard=true
-        input_mjoy/tap_to_dismiss=false
-        command_line/extra_args=""
-        signing/debug=""
-        signing/release=""
-        signing/autotools_debug=""
-        signing/autotools_release=""
-        feature/ETC2_ASTC=true
-        feature/ETC2_ASTC_ignore_transparency=false
-        feature/ETC2_URGB8888=false
-        feature/ETC2_URGB8888_ignore_transparency=false
-        feature/ETC2_RGB8888=false
-        feature/ETC2_RGB8888_ignore_transparency=false
-        feature/ETC2_RGBA8888=false
-        feature/ETC2_RGBA8888_ignore_transparency=false
-        feature/ASTC_HR_ALPHA=false
-        feature/ASTC_HR_ALPHA_ignore_transparency=false
-        feature/ASTC_LDR_ALPHA=false
-        feature/ASTC_LDR_ALPHA_ignore_transparency=false
-        feature/GLES2=false
-        feature/GLES3=false
-        vr_mode=false
-        support/gl_compatibility=true
-        support/gles3_vertex=false
-        allow_unused_ldr_starts=false
-        custom_build/debug_keystore=debug.keystore
-        custom_build/debug_keystore_user=androiddebugkey
-        custom_build/debug_keystore_pass=android
-        custom_build/release_keystore=""
-        custom_build/release_keystore_user=""
-        custom_build/release_keystore_pass=""
-        custom_build/alias=""
-        custom_build/keystore=""
-        custom_build/apk_expansion=false
-        custom_build/apk_expansion_file_size=50
-        custom_build/so_filter=""
-        custom_build/split_bits=false
-        custom_build/split_by_abis=false
-        custom_build/split_by_density=false
-        custom_build/split_by_locale=false
-        custom_build/no_debug_symbols=false
-        custom_build/debug_file_extension=""
-        custom_build/compress_texture_format=2
-
-        EOF
+        godot-version: "4.2.2"
         
     - name: Build Android APK
       run: |
-        export ANDROID_SDK_ROOT=$ANDROID_HOME
-        godot --headless --path . --export-release "Android" builds/android/android.apk
+        mkdir -p build/android
+        godot --headless --path . --export-release "Android" build/android/android.apk
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: android-apk
-        path: builds/android/android.apk
+        path: build/android/android.apk
         retention-days: 30
