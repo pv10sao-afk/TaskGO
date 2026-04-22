@@ -5,29 +5,29 @@ func _ready() -> void:
 	var deck_mgr: Node = $DeckManager
 	var elixir: Node = $Elixir
 
-	var starter: Array = db.get_starter_deck()
-	deck_mgr.initialize(starter)
-
+	# Connect signals BEFORE initialize so first emit is caught
 	elixir.elixir_changed.connect(_on_elixir_changed)
 	deck_mgr.deck_updated.connect(_on_deck_updated)
 
+	var starter: Array = db.get_starter_deck()
+	deck_mgr.initialize(starter)
+
+	# Connect card slot buttons
 	for i in range(4):
-		var slot = get_node_or_null("UI/Cards/Slot%d" % i)
+		var slot = get_node_or_null("UI/Root/HandLayout/Cards/Slot%d" % i)
 		if slot:
 			slot.pressed.connect(_on_card_pressed.bind(i))
 
-	var back_btn = get_node_or_null("UI/TopBar/BackBtn")
+	var back_btn = get_node_or_null("UI/Root/TopBar/BackBtn")
 	if back_btn:
 		back_btn.pressed.connect(_on_back_pressed)
 
-	_on_elixir_changed(elixir.current_elixir)
-	_on_deck_updated()
-
 func _on_elixir_changed(amount: int) -> void:
-	var label = get_node_or_null("UI/TopBar/ElixirLabel")
+	var label = get_node_or_null("UI/Root/TopBar/ElixirLabel")
 	if label:
 		label.text = "⚡ %d / 10" % amount
-	var bar = get_node_or_null("UI/ElixirBar")
+
+	var bar = get_node_or_null("UI/Root/HandLayout/ElixirBar")
 	if bar:
 		for i in range(bar.get_child_count()):
 			var cell = bar.get_child(i)
@@ -39,7 +39,7 @@ func _on_deck_updated() -> void:
 	var elixir: Node = $Elixir
 	var hand: Array = deck_mgr.get_hand()
 	for i in range(4):
-		var slot = get_node_or_null("UI/Cards/Slot%d" % i)
+		var slot = get_node_or_null("UI/Root/HandLayout/Cards/Slot%d" % i)
 		if not slot:
 			continue
 		var card = hand[i] if i < hand.size() else null

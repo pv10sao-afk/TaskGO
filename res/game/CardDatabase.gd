@@ -1,7 +1,18 @@
 extends Node
 
-# BUG FIX: path was "res://cards/" — project files are under res/res/, so must be "res://res/cards/"
 const CARD_DB_PATH = "res://res/cards/"
+
+# Explicit list of all card files as fallback when DirAccess fails
+const KNOWN_CARDS = [
+	"soldier_1.tres",
+	"soldier_2.tres",
+	"tank_1.tres",
+	"ranger_1.tres",
+	"tower_1.tres",
+	"barracks_1.tres",
+	"fireball.tres",
+	"freeze.tres",
+]
 
 var all_cards: Array = []
 
@@ -9,18 +20,26 @@ func _ready():
 	load_all_cards()
 
 func load_all_cards():
+	# Try scanning directory first
 	var dir = DirAccess.open(CARD_DB_PATH)
-	if not dir:
-		return
-	dir.list_dir_begin()
-	var file_name = dir.get_next()
-	while file_name != "":
-		if file_name.ends_with(".tres"):
-			var card = load(CARD_DB_PATH + file_name)
-			if card:
-				all_cards.append(card)
-		file_name = dir.get_next()
-	dir.list_dir_end()
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+		while file_name != "":
+			if file_name.ends_with(".tres"):
+				var card = load(CARD_DB_PATH + file_name)
+				if card:
+					all_cards.append(card)
+			file_name = dir.get_next()
+		dir.list_dir_end()
+	else:
+		# FIX: DirAccess can return null in some builds; preload known cards explicitly
+		for f in KNOWN_CARDS:
+			var path = CARD_DB_PATH + f
+			if ResourceLoader.exists(path):
+				var card = load(path)
+				if card:
+					all_cards.append(card)
 
 func get_card_by_id(card_id: String):
 	for c in all_cards:
