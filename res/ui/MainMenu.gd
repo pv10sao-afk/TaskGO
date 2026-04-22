@@ -4,7 +4,9 @@ func _ready():
 	pass
 
 func on_play_bot_pressed():
-	get_tree().change_scene_to_file("res://scenes/Game.tscn")
+	# BUG FIX: path was "res://scenes/Game.tscn" — project files live under
+	# the res/ subfolder, so the correct path is "res://res/scenes/Game.tscn"
+	get_tree().change_scene_to_file("res://res/scenes/Game.tscn")
 
 func on_deck_pressed():
 	print("Open Deck Builder")

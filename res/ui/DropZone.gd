@@ -1,4 +1,6 @@
-extends Node2D
+# BUG FIX: was "extends Node2D" — can_drop_data / drop_data are Control methods
+# and are NEVER called on a Node2D. DropZone must extend Control to receive drops.
+extends Control
 
 var valid_drop: bool = false
 

@@ -1,4 +1,5 @@
-extends Node
+class_name CardData
+extends Resource  # BUG FIX: was "extends Node" — .tres files are Resources, not Nodes
 
 var id: String = ""
 var cost: int = 1
