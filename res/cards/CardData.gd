@@ -1,8 +1,8 @@
 class_name CardData
-extends Resource  # BUG FIX: was "extends Node" — .tres files are Resources, not Nodes
+extends Resource
 
-var id: String = ""
-var cost: int = 1
-var icon: Texture2D
-var description: String = ""
-var packed_scene: PackedScene
+@export var id: String = ""
+@export var cost: int = 1
+@export var icon: Texture2D
+@export var description: String = ""
+@export var packed_scene: PackedScene

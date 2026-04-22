@@ -1,44 +1,61 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
-[ext_resource path="res://core/BattleManager.gd" type="Script" id=1]
+[ext_resource path="res://res/core/BattleManager.gd" type="Script" id=1]
+[ext_resource path="res://res/game/Elixir.gd" type="Script" id=2]
+[ext_resource path="res://res/game/DeckManager.gd" type="Script" id=3]
+[ext_resource path="res://res/game/CardDatabase.gd" type="Script" id=4]
+[ext_resource path="res://res/ai/BotAI.gd" type="Script" id=5]
 
 [node name="Game" type="Node2D"]
+
+[node name="BattleManager" type="Node" parent="."]
 script = ExtResource(1)
 
-[node name="Lanes" type="Node2D"]
+[node name="Elixir" type="Node" parent="."]
+script = ExtResource(2)
 
-  [node name="Lane0" type="Node2D"]
-    [node name="SpawnMarker" type="Marker2D"]
-    position = Vector2(100, 550)
-  
-  [node name="Lane0Zone" type="Area2D"]
-    [node name="CollisionShape2D" type="CollisionShape2D"]
-    shape = RectangleShape2D
-    shape.size = Vector2(180, 120)
-  
-  [node name="Lane1" type="Node2D"]
-    [node name="SpawnMarker" type="Marker2D"]
-    position = Vector2(400, 550)
-  
-  [node name="Lane1Zone" type="Area2D"]
-    [node name="CollisionShape2D" type="CollisionShape2D"]
-    shape = RectangleShape2D
-    shape.size = Vector2(180, 120)
-  
-  [node name="Lane2" type="Node2D"]
-    [node name="SpawnMarker" type="Marker2D"]
-    position = Vector2(700, 550)
-  
-  [node name="Lane2Zone" type="Area2D"]
-    [node name="CollisionShape2D" type="CollisionShape2D"]
-    shape = RectangleShape2D
-    shape.size = Vector2(180, 120)
-  
-[node name="PlayerBase" type="Node2D"]
+[node name="DeckManager" type="Node" parent="."]
+script = ExtResource(3)
+
+[node name="CardDatabase" type="Node" parent="."]
+script = ExtResource(4)
+
+[node name="BotAI" type="Node" parent="."]
+script = ExtResource(5)
+
+[node name="Lanes" type="Node2D" parent="."]
+
+[node name="Lane0" type="Node2D" parent="Lanes"]
+
+[node name="SpawnMarker" type="Marker2D" parent="Lanes/Lane0"]
+position = Vector2(100, 550)
+
+[node name="Lane0Zone" type="Area2D" parent="Lanes"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Lanes/Lane0Zone"]
+
+[node name="Lane1" type="Node2D" parent="Lanes"]
+
+[node name="SpawnMarker" type="Marker2D" parent="Lanes/Lane1"]
+position = Vector2(400, 550)
+
+[node name="Lane1Zone" type="Area2D" parent="Lanes"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Lanes/Lane1Zone"]
+
+[node name="Lane2" type="Node2D" parent="Lanes"]
+
+[node name="SpawnMarker" type="Marker2D" parent="Lanes/Lane2"]
+position = Vector2(700, 550)
+
+[node name="Lane2Zone" type="Area2D" parent="Lanes"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Lanes/Lane2Zone"]
+
+[node name="PlayerBase" type="Node2D" parent="."]
 position = Vector2(400, 650)
 
-[node name="EnemyBase" type="Node2D"]
+[node name="EnemyBase" type="Node2D" parent="."]
 position = Vector2(400, 50)
 
-[node name="Camera" type="Camera2D"]
-current = true
+[node name="Camera" type="Camera2D" parent="."]

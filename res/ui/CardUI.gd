@@ -18,6 +18,10 @@ func drop_data(_pos: Vector2, data):
 	if not data or not data.has("card"):
 		return
 	var dragged = data["card"]
-	var mgr = get_node("/root/BattleManager") if has_node("/root/BattleManager") else null
-	if mgr and mgr.has_method("deploy_card_at_lane"):
-		mgr.call("deploy_card_at_lane", dragged, 0)
+	var scene = get_tree().get_current_scene()
+	if scene and scene.has_method("deploy_card_at_lane"):
+		scene.deploy_card_at_lane(dragged, 0)
+	elif scene and scene.has_node("BattleManager"):
+		var mgr = scene.get_node("BattleManager")
+		if mgr.has_method("deploy_card_at_lane"):
+			mgr.call("deploy_card_at_lane", dragged, 0)
