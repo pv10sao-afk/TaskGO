@@ -20,6 +20,11 @@ jobs:
       with:
         godot-version: "4.2.2"
         
+    - name: Import project
+      run: |
+        mkdir -p .godot
+        godot --headless --path . --import --quit
+        
     - name: Build Android APK
       run: |
         mkdir -p build/android
