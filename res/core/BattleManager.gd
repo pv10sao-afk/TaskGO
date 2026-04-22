@@ -3,7 +3,7 @@ extends Node
 signal deploy_validated(is_valid: bool, position: Vector2)
 signal unit_deployed(unit: Node)
 
-const CENTER_Y: float = 400.0
+const CENTER_Y: float = 640.0
 
 func deploy_card_at_lane(card: Resource, lane_index: int) -> void:
 	if not card:

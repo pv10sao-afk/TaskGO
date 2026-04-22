@@ -15,7 +15,7 @@ func _ready():
 		elixir_node = get_node("../Elixir")
 	if has_node("../DeckManager"):
 		deck_manager = get_node("../DeckManager")
-	lane_positions = [Vector2(100, 200), Vector2(400, 200), Vector2(700, 200)]
+	lane_positions = [Vector2(120, 200), Vector2(360, 200), Vector2(600, 200)]
 	is_running = true
 
 func _process(delta: float):
