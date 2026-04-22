@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource path="res://cards/UnitCardData.gd" type="Script" id=1]
+
+[resource]
+script = ExtResource(1)
+id = "tank_1"
+cost = 5
+icon = null
+description = "Heavy tank with turret"
+packed_scene = null
+hp = 250
+max_hp = 250
+dmg = 40
+speed = 60.0

@@ -1,0 +1,4 @@
+[gd_project]
+
+[autoload]
+BattleManager="res://core/BattleManager.gd"
