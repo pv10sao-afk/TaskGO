@@ -1,5 +1,4 @@
 extends CharacterBody2D
-class_name BaseUnit
 
 @export var max_hp: int = 100
 @export var dmg: int = 10

@@ -1,5 +1,4 @@
 extends Node
-class_name BattleManager
 
 signal deploy_validated(is_valid: bool, position: Vector2)
 signal unit_deployed(unit: Node)

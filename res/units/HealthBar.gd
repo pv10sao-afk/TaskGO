@@ -1,5 +1,4 @@
 extends Control
-class_name HealthBar
 
 @export var width: float = 60.0
 @export var height: float = 8.0

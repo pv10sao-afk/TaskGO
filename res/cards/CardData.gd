@@ -1,5 +1,4 @@
 extends Node
-class_name CardData
 
 var id: String = ""
 var cost: int = 1

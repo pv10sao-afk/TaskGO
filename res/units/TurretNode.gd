@@ -1,5 +1,4 @@
 extends Node2D
-class_name TurretNode
 
 @export var max_ammo: int = 5
 @export var fire_rate: float = 0.5

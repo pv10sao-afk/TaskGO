@@ -1,4 +1,4 @@
-class_name SettingsUI extends CanvasLayer
+extends CanvasLayer
 
 var master_slider: HSlider
 var music_slider: HSlider

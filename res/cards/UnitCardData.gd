@@ -1,5 +1,4 @@
-extends CardData
-class_name UnitCardData
+extends Node
 
 @export var hp: int = 100
 @export var max_hp: int = 100

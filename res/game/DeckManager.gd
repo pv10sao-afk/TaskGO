@@ -1,5 +1,4 @@
 extends Node
-class_name DeckManager
 
 signal deck_updated
 

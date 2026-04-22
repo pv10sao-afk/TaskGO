@@ -1,5 +1,4 @@
 extends Node
-class_name CardDatabase
 
 const CARD_DB_PATH = "res://cards/"
 
@@ -31,21 +30,21 @@ func get_card_by_id(card_id: String):
 func get_all_unit_cards() -> Array:
 	var result: Array = []
 	for c in all_cards:
-		if c is UnitCardData:
+		if "UnitCardData" in c.get_class():
 			result.append(c)
 	return result
 
 func get_all_spell_cards() -> Array:
 	var result: Array = []
 	for c in all_cards:
-		if c is SpellCardData:
+		if "SpellCardData" in c.get_class():
 			result.append(c)
 	return result
 
 func get_all_building_cards() -> Array:
 	var result: Array = []
 	for c in all_cards:
-		if c is BuildingCardData:
+		if "BuildingCardData" in c.get_class():
 			result.append(c)
 	return result
 

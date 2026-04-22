@@ -1,4 +1,4 @@
-class_name DropZone extends Node2D
+extends Node2D
 
 var valid_drop: bool = false
 

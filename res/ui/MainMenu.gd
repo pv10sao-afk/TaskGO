@@ -1,4 +1,4 @@
-class_name MainMenu extends CanvasLayer
+extends CanvasLayer
 
 func _ready():
 	pass

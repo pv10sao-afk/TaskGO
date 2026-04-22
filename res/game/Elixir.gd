@@ -1,5 +1,4 @@
 extends Node
-class_name Elixir
 
 signal elixir_changed(new_amount: int)
 

@@ -1,5 +1,4 @@
 extends Node
-class_name BotAI
 
 @export var lanes_count: int = 3
 @export var starting_elixir: int = 10
