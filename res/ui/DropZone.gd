@@ -1,20 +1,17 @@
-extends Node2D
-class_name DropZone
+class_name DropZone extends Node2D
 
-var valid_drop := false
+var valid_drop: bool = false
 
 func _unhandled_input(event):
-    if event is InputEventScreenTouch and event.pressed:
-        # Could initialize ghost shadow here
-        pass
+	pass
 
-func can_drop_data(position, data) -> bool:
-    return data is Dictionary and data.has("type") and data["type"] == "card"
+func can_drop_data(_position: Vector2, data) -> bool:
+	return data is Dictionary and data.has("type") and data["type"] == "card"
 
-func drop_data(position, data) -> void:
-    if not data or not data.has("card"):
-        return
-    var card = data["card"]
-    var mgr = get_node("/root/BattleManager") if has_node("/root/BattleManager") else null
-    if mgr and mgr.has_method("deploy_card_at_lane"):
-        mgr.call("deploy_card_at_lane", card, 0)
+func drop_data(_position: Vector2, data):
+	if not data or not data.has("card"):
+		return
+	var card = data["card"]
+	var mgr = get_node("/root/BattleManager") if has_node("/root/BattleManager") else null
+	if mgr and mgr.has_method("deploy_card_at_lane"):
+		mgr.call("deploy_card_at_lane", card, 0)

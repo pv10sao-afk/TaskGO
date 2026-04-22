@@ -1,5 +1,5 @@
 extends CardData
 class_name BuildingCardData
 
-export(int) var hp = 500
-export(int) var attack = 0
+@export var hp: int = 500
+@export var attack: int = 0

@@ -1,16 +1,13 @@
-extends CanvasLayer
-class_name SettingsUI
+class_name SettingsUI extends CanvasLayer
 
-var master_slider := null
-var music_slider := null
-var sfx_slider := null
-var vib_toggle := null
-var fps_mode := null
+var master_slider: HSlider
+var music_slider: HSlider
+var sfx_slider: HSlider
+var vib_toggle: CheckButton
+var fps_mode: OptionButton
 
 func _ready():
-    pass
+	pass
 
-func _on_master_changed(value):
-    # Apply master volume to AudioServer
-    # AudioServer.set_bus_volume_db(0, value)
-    pass
+func _on_master_changed(value: float):
+	pass

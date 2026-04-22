@@ -3,7 +3,7 @@ class_name CardDatabase
 
 const CARD_DB_PATH = "res://cards/"
 
-var all_cards: Array[CardData] = []
+var all_cards: Array = []
 
 func _ready():
 	load_all_cards()
@@ -17,40 +17,40 @@ func load_all_cards():
 	while file_name != "":
 		if file_name.ends_with(".tres"):
 			var card = load(CARD_DB_PATH + file_name)
-			if card is CardData:
+			if card:
 				all_cards.append(card)
 		file_name = dir.get_next()
 	dir.list_dir_end()
 
-func get_card_by_id(card_id: String) -> CardData:
+func get_card_by_id(card_id: String):
 	for c in all_cards:
 		if c.id == card_id:
 			return c
 	return null
 
-func get_all_unit_cards() -> Array[UnitCardData]:
-	var result: Array[UnitCardData] = []
+func get_all_unit_cards() -> Array:
+	var result: Array = []
 	for c in all_cards:
 		if c is UnitCardData:
 			result.append(c)
 	return result
 
-func get_all_spell_cards() -> Array[SpellCardData]:
-	var result: Array[SpellCardData] = []
+func get_all_spell_cards() -> Array:
+	var result: Array = []
 	for c in all_cards:
 		if c is SpellCardData:
 			result.append(c)
 	return result
 
-func get_all_building_cards() -> Array[BuildingCardData]:
-	var result: Array[BuildingCardData] = []
+func get_all_building_cards() -> Array:
+	var result: Array = []
 	for c in all_cards:
 		if c is BuildingCardData:
 			result.append(c)
 	return result
 
-func get_starter_deck() -> Array[CardData]:
-	var deck: Array[CardData] = []
+func get_starter_deck() -> Array:
+	var deck: Array = []
 	deck.append(get_card_by_id("soldier_1"))
 	deck.append(get_card_by_id("soldier_1"))
 	deck.append(get_card_by_id("tank_1"))

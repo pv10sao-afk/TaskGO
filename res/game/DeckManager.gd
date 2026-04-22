@@ -3,7 +3,7 @@ class_name DeckManager
 
 signal deck_updated
 
-export(int) var hand_slots := 4
+@export var hand_slots: int = 4
 
 var deck: Array = []
 var hand: Array = []
@@ -34,10 +34,10 @@ func can_play(index: int, current_elixir: int) -> bool:
 		return false
 	return current_elixir >= card.cost
 
-func play_card(index: int) -> CardData:
+func play_card(index: int) -> Resource:
 	if index < 0 or index >= hand.size():
 		return null
-	var card: CardData = hand[index]
+	var card = hand[index]
 	if card == null:
 		return null
 	hand.remove_at(index)
@@ -50,6 +50,6 @@ func draw_card():
 		hand.append(deck.pop_at(0))
 		emit_signal("deck_updated")
 
-func add_card_to_deck(card: CardData):
+func add_card_to_deck(card: Resource):
 	deck.append(card)
 	emit_signal("deck_updated")

@@ -1,11 +1,8 @@
-extends Resource
+extends Node
 class_name CardData
 
-export(String) var id = ""
-export(int) var cost = 1
-export(Texture2D) var icon
-export(String) var description = ""
-export(PackedScene) var packed_scene
-
-func _init():
-    pass
+var id: String = ""
+var cost: int = 1
+var icon: Texture2D
+var description: String = ""
+var packed_scene: PackedScene
