@@ -51,6 +51,7 @@ jobs:
 
     - name: Generate debug keystore
       run: |
+        rm -f debug.keystore
         keytool -genkey -v \
           -keystore debug.keystore \
           -alias androiddebugkey \
