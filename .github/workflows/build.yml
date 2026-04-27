@@ -7,6 +7,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -49,15 +52,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Debug react-native config
-        run: node node_modules/.bin/react-native config 2>&1 | head -100 || true
-
       - name: Build Android APK (Debug)
-        run: cd android && ./gradlew assembleDebug --no-daemon --info 2>&1 | tail -200
+        run: cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
+          if-no-files-found: warn
