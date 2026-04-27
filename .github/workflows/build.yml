@@ -49,8 +49,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Debug react-native config
+        run: node node_modules/.bin/react-native config 2>&1 | head -100 || true
+
       - name: Build Android APK (Debug)
-        run: cd android && ./gradlew assembleDebug --no-daemon
+        run: cd android && ./gradlew assembleDebug --no-daemon --info 2>&1 | tail -200
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
