@@ -34,15 +34,8 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Configure npm for reliability
-        run: |
-          npm config set fetch-retry-mintimeout 20000
-          npm config set fetch-retry-maxtimeout 120000
-          npm config set fetch-retries 5
-          npm config set network-timeout 300000
-
       - name: Install dependencies
-        run: npm ci --prefer-offline || npm ci
+        run: npm ci || npm ci || npm ci
 
       - name: Create local.properties
         run: echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
