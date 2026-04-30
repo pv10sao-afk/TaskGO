@@ -2,7 +2,7 @@ import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity
 import * as Haptics from '../utils/haptics';
 import { useEffect, useState } from 'react';
 import { useIsFocused } from '@react-navigation/native';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { StackScreenProps } from '@react-navigation/stack';
 
 import {
   clearExerciseCache,
@@ -14,7 +14,7 @@ import {
   updateCachedExercise,
   type CachedExerciseRecord,
 } from '../services/storage';
-import type { AppTabParamList } from '../navigation/AppNavigator';
+import type { AppRootParamList } from '../navigation/AppNavigator';
 import type { Exercise } from '../types';
 
 function getExerciseCategory(exercise: Exercise) {
@@ -63,7 +63,7 @@ function getPracticeFocusForExercise(exercise: Exercise) {
   return exercise.category;
 }
 
-type LibraryScreenProps = BottomTabScreenProps<AppTabParamList, 'Library'>;
+type LibraryScreenProps = StackScreenProps<AppRootParamList, 'Library'>;
 
 const FILTERS = [
   { key: 'all', label: 'Усе' },
@@ -152,9 +152,12 @@ export function LibraryScreen({ navigation }: LibraryScreenProps) {
 
   async function handleUseExercise(item: CachedExerciseRecord) {
     await Haptics.selectionAsync();
-    navigation.navigate('Practice', {
-      focus: getPracticeFocusForExercise(item.exercise),
-      presetExercise: item.exercise,
+    (navigation as any).navigate('Tabs', {
+      screen: 'Practice',
+      params: {
+        focus: getPracticeFocusForExercise(item.exercise),
+        presetExercise: item.exercise,
+      }
     });
   }
 

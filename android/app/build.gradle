@@ -15,6 +15,8 @@ def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
+    // Point the bundler to the TypeScript entry file (project uses index.ts, not index.js)
+    entryFile = file("../../index.ts")
     autolinkLibrariesWithApp()
 }
 
@@ -111,24 +113,6 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-
-    def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
-    def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
-    def isWebpAnimatedEnabled = (findProperty('expo.webp.animated') ?: "") == "true";
-
-    if (isGifEnabled) {
-        // For animated gif support
-        implementation("com.facebook.fresco:animated-gif:3.1.3")
-    }
-
-    if (isWebpEnabled) {
-        // For webp support
-        implementation("com.facebook.fresco:webpsupport:3.1.3")
-        if (isWebpAnimatedEnabled) {
-            // Animated webp support
-            implementation("com.facebook.fresco:animated-webp:3.1.3")
-        }
-    }
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

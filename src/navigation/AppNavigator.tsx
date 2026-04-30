@@ -2,6 +2,7 @@ import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { C } from '../constants/theme';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+// @ts-ignore
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { DeviceEventEmitter, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -28,15 +29,15 @@ export type AppTabParamList = {
         source?: PracticeSessionSource;
       }
     | undefined;
-  Library: undefined;
   Chat: undefined;
-  Stats: undefined;
 };
 
 export type AppRootParamList = {
   Tabs: undefined;
   Flashcard: undefined;
   Subscription: undefined;
+  Library: undefined;
+  Stats: undefined;
 };
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
@@ -106,51 +107,42 @@ function TabNavigator({
           backgroundColor: C.surface,
           borderTopColor: C.cardBorder,
           borderTopWidth: 1,
-          height: 72,
-          paddingBottom: 10,
-          paddingTop: 8,
+          height: 80,
+          paddingBottom: 14,
+          paddingTop: 10,
         },
         tabBarShowLabel: true,
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: '700',
-          marginTop: 2,
+          marginTop: 3,
         },
-        tabBarItemStyle: { borderRadius: 12 },
+        tabBarItemStyle: { borderRadius: 14 },
         tabBarIcon: ({ color, focused }) => {
           const TAB_ICONS: Record<string, [string, string]> = {
-            Home:     ['home-variant',       'home-variant-outline'],
-            Learn:    ['book-education',      'book-education-outline'],
-            Practice: ['lightning-bolt',      'lightning-bolt-outline'],
-            Library:  ['database',            'database-outline'],
-            Chat:     ['chat-processing',     'chat-processing-outline'],
-            Stats:    ['chart-box',           'chart-box-outline'],
+            Home:     ['home-variant',   'home-variant-outline'],
+            Learn:    ['book-open-page-variant', 'book-open-page-variant-outline'],
+            Practice: ['lightning-bolt', 'lightning-bolt-outline'],
+            Chat:     ['robot',          'robot-outline'],
           };
           const [active, inactive] = TAB_ICONS[route.name] ?? ['help-circle', 'help-circle-outline'];
           const iconName = focused ? active : inactive;
-
-          return <MaterialCommunityIcons color={color} name={iconName as any} size={22} />;
+          return <MaterialCommunityIcons color={color} name={iconName as any} size={26} />;
         },
         tabBarLabel:
           route.name === 'Home'
-            ? 'Головна'
+            ? 'Дім'
             : route.name === 'Learn'
-              ? 'Слова'
+              ? 'Вчити'
               : route.name === 'Practice'
                 ? 'Практика'
-                : route.name === 'Library'
-                  ? 'База'
-                  : route.name === 'Chat'
-                    ? 'AI Чат'
-                    : 'Статистика',
+                : 'AI-Чат',
       })}
     >
       <Tab.Screen component={HomeScreen} name="Home" options={{ title: 'Головна' }} />
-      <Tab.Screen component={LearnScreen} name="Learn" options={{ title: 'Слова' }} />
+      <Tab.Screen component={LearnScreen} name="Learn" options={{ title: 'Вчити' }} />
       <Tab.Screen component={PracticeScreen} name="Practice" options={{ title: 'Практика' }} />
-      <Tab.Screen component={LibraryScreen} name="Library" options={{ title: 'База' }} />
-      <Tab.Screen component={ChatScreen} name="Chat" options={{ title: 'AI-чат' }} />
-      <Tab.Screen component={StatsScreen} name="Stats" options={{ title: 'Статистика' }} />
+      <Tab.Screen component={ChatScreen} name="Chat" options={{ title: 'AI-Чат' }} />
     </Tab.Navigator>
   );
 }
@@ -213,6 +205,30 @@ export function AppNavigator() {
           options={{
             headerShown: true,
             headerTitle: 'Підписка',
+            headerStyle: { backgroundColor: C.bg },
+            headerTintColor: C.text,
+            headerShadowVisible: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          component={LibraryScreen}
+          name="Library"
+          options={{
+            headerShown: true,
+            headerTitle: 'База слів та курсів',
+            headerStyle: { backgroundColor: C.bg },
+            headerTintColor: C.text,
+            headerShadowVisible: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          component={StatsScreen}
+          name="Stats"
+          options={{
+            headerShown: true,
+            headerTitle: 'Статистика',
             headerStyle: { backgroundColor: C.bg },
             headerTintColor: C.text,
             headerShadowVisible: false,

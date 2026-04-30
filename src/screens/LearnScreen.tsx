@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+// @ts-ignore
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Haptics from '../utils/haptics';
 import { useIsFocused } from '@react-navigation/native';
 
@@ -616,6 +618,7 @@ export function LearnScreen({ navigation }: LearnScreenProps) {
             <Animated.Text style={[styles.swipeBadge, styles.swipeBadgeRight, { opacity: swipeLabelRightOpacity }]}>
               Добре
             </Animated.Text>
+            
             <Animated.View
               {...panResponder.panHandlers}
               style={[
@@ -625,6 +628,16 @@ export function LearnScreen({ navigation }: LearnScreenProps) {
                 },
               ]}
             >
+            <View style={styles.swipeHintRow}>
+              <Animated.View style={{ opacity: swipeX.interpolate({ inputRange: [-50, 0], outputRange: [1, 0.4], extrapolate: 'clamp' }) }}>
+                <MaterialCommunityIcons name="arrow-left" size={24} color="#FCA5A5" />
+              </Animated.View>
+              <Text style={styles.swipeHintText}>Свайпай картку</Text>
+              <Animated.View style={{ opacity: swipeX.interpolate({ inputRange: [0, 50], outputRange: [0.4, 1], extrapolate: 'clamp' }) }}>
+                <MaterialCommunityIcons name="arrow-right" size={24} color="#86EFAC" />
+              </Animated.View>
+            </View>
+
             <View style={styles.wordHeader}>
               <View style={styles.wordInfo}>
                 <Text style={styles.word}>{activeStudyWord.word}</Text>
@@ -644,12 +657,6 @@ export function LearnScreen({ navigation }: LearnScreenProps) {
 
             <Text style={styles.queueHint}>
               У міні-сесії зараз {studyQueue.length} слів. На повтор: {wordStats.due}. Нових: {wordStats.newWords}.
-            </Text>
-            <Text style={styles.queueHint}>
-              Не знаю повертає слово одразу, Важко кидає його швидше назад, Добре дає нормальний інтервал, Легко відсуває далі.
-            </Text>
-            <Text style={styles.queueHint}>
-              Швидкий режим: свайп вліво це "Не знаю", свайп вправо це "Добре".
             </Text>
 
             <View style={styles.actionRow}>
@@ -1696,5 +1703,21 @@ const styles = StyleSheet.create({
     color: '#C4B5FD',
     fontSize: 15,
     fontWeight: '800',
+  },
+  swipeHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1E293B',
+    marginBottom: 20,
+  },
+  swipeHintText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });

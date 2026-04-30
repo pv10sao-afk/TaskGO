@@ -1,13 +1,14 @@
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, DeviceEventEmitter } from 'react-native';
 import * as Haptics from '../utils/haptics';
 import { useIsFocused } from '@react-navigation/native';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { StackScreenProps } from '@react-navigation/stack';
+// @ts-ignore
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { ProgressBar } from '../components/ProgressBar';
 import { WeakTopicBadge } from '../components/WeakTopicBadge';
 import { useProgress } from '../hooks/useProgress';
-import type { AppTabParamList } from '../navigation/AppNavigator';
+import type { AppRootParamList } from '../navigation/AppNavigator';
 import { getAccessStatus } from '../services/access';
 import {
   clearChatHistory,
@@ -31,7 +32,7 @@ import {
   scheduleStudyReminder,
 } from '../services/notifications';
 
-type StatsScreenProps = BottomTabScreenProps<AppTabParamList, 'Stats'>;
+type StatsScreenProps = StackScreenProps<AppRootParamList, 'Stats'>;
 
 function getLast28Days() {
   return Array.from({ length: 28 }, (_, index) => {

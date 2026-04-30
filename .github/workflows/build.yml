@@ -9,6 +9,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_ENV: production
 
 jobs:
   build-android:
@@ -25,6 +26,7 @@ jobs:
           cache: 'npm'
 
       - name: Setup Java
+        id: setup-java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -53,13 +55,19 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build Android APK (Release)
+        env:
+          JAVA_HOME: ${{ steps.setup-java.outputs.path }}
         run: cd android && ./gradlew assembleRelease --no-daemon
 
+      - name: List APK output
+        if: success()
+        run: ls -lh android/app/build/outputs/apk/release/
+
       - name: Upload APK
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
-          if-no-files-found: warn
+          if-no-files-found: error

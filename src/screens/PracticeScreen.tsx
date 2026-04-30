@@ -14,7 +14,7 @@ import {
 import Sound from 'react-native-sound';
 import * as Haptics from '../utils/haptics';
 import * as Speech from '../utils/tts';
-import Voice, { type SpeechResultsEvent, type SpeechErrorEvent } from '@react-native-voice/voice';
+import Voice from '@react-native-voice/voice';
 import { PermissionsAndroid, Platform } from 'react-native';
 
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -396,7 +396,7 @@ export function PracticeScreen({ navigation, route }: PracticeScreenProps) {
         // Check voice recognition availability
         const available = await Voice.isAvailable();
         if (isActive) {
-          setSpeechRecognitionAvailable(available === 1 || available === true);
+          setSpeechRecognitionAvailable(Boolean(available));
           setSpeechRecordingSupported(false); // @react-native-voice/voice не підтримує запис файлу
         }
       } catch {
@@ -436,7 +436,7 @@ export function PracticeScreen({ navigation, route }: PracticeScreenProps) {
       setIsRecognizingSpeech(false);
     };
 
-    Voice.onSpeechResults = (event: SpeechResultsEvent) => {
+    Voice.onSpeechResults = (event: any) => {
       if (!isMounted) return;
       const bestTranscript = event.value?.[0]?.trim() ?? '';
       if (!bestTranscript) return;
@@ -445,7 +445,7 @@ export function PracticeScreen({ navigation, route }: PracticeScreenProps) {
       setAnswer(bestTranscript);
     };
 
-    Voice.onSpeechPartialResults = (event: SpeechResultsEvent) => {
+    Voice.onSpeechPartialResults = (event: any) => {
       if (!isMounted) return;
       const partial = event.value?.[0]?.trim() ?? '';
       if (!partial) return;
@@ -454,7 +454,7 @@ export function PracticeScreen({ navigation, route }: PracticeScreenProps) {
       setAnswer(partial);
     };
 
-    Voice.onSpeechError = (event: SpeechErrorEvent) => {
+    Voice.onSpeechError = (event: any) => {
       if (!isMounted) return;
       setIsRecognizingSpeech(false);
       const code = event.error?.code ?? '';
@@ -472,11 +472,6 @@ export function PracticeScreen({ navigation, route }: PracticeScreenProps) {
 
     return () => {
       isMounted = false;
-      Voice.onSpeechStart = undefined;
-      Voice.onSpeechEnd = undefined;
-      Voice.onSpeechResults = undefined;
-      Voice.onSpeechPartialResults = undefined;
-      Voice.onSpeechError = undefined;
       void Voice.destroy();
     };
   }, []);
@@ -1178,9 +1173,20 @@ export function PracticeScreen({ navigation, route }: PracticeScreenProps) {
       </View>
 
       {screenState === 'loading' ? (
-        <View style={styles.stateCard}>
-          <ActivityIndicator color="#7C3AED" size="large" />
-          <Text style={styles.stateText}>Готується нове завдання...</Text>
+        <View style={styles.skeletonContainer}>
+          <Animated.View style={[styles.skeletonTitle, { opacity: flashAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.7] }) }]} />
+          <Animated.View style={[styles.skeletonInstruction, { opacity: flashAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.7] }) }]} />
+          
+          <View style={styles.skeletonCard}>
+            <Animated.View style={[styles.skeletonLineShort, { opacity: flashAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.5] }) }]} />
+            <Animated.View style={[styles.skeletonLineLong, { opacity: flashAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.5] }) }]} />
+            <Animated.View style={[styles.skeletonLineLong, { opacity: flashAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.5] }) }]} />
+          </View>
+
+          <View style={styles.skeletonCard}>
+            <Animated.View style={[styles.skeletonInput, { opacity: flashAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.5] }) }]} />
+            <Animated.View style={[styles.skeletonButton, { opacity: flashAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.8] }) }]} />
+          </View>
         </View>
       ) : null}
 
@@ -1190,7 +1196,7 @@ export function PracticeScreen({ navigation, route }: PracticeScreenProps) {
           <Text style={styles.summaryText}>
             {sessionEndReason || 'Поточний ліміт на вправи вже вичерпано.'}
           </Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Stats')}>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => (navigation as any).navigate('Stats')}>
             <Text style={styles.primaryButtonText}>Відкрити статистику</Text>
           </TouchableOpacity>
         </View>
@@ -1989,5 +1995,55 @@ const styles = StyleSheet.create({
     color: '#E2E8F0',
     fontSize: 15,
     lineHeight: 24,
+  },
+  skeletonContainer: {
+    gap: 20,
+    marginTop: 10,
+  },
+  skeletonTitle: {
+    height: 28,
+    width: '60%',
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+  },
+  skeletonInstruction: {
+    height: 18,
+    width: '80%',
+    backgroundColor: '#1E293B',
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  skeletonCard: {
+    backgroundColor: '#0F172A',
+    borderColor: '#1E293B',
+    borderWidth: 1,
+    borderRadius: 24,
+    padding: 24,
+    gap: 16,
+  },
+  skeletonLineShort: {
+    height: 20,
+    width: '40%',
+    backgroundColor: '#1E293B',
+    borderRadius: 6,
+  },
+  skeletonLineLong: {
+    height: 20,
+    width: '100%',
+    backgroundColor: '#1E293B',
+    borderRadius: 6,
+  },
+  skeletonInput: {
+    height: 54,
+    width: '100%',
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+  },
+  skeletonButton: {
+    height: 54,
+    width: '100%',
+    backgroundColor: '#3730A3',
+    borderRadius: 16,
+    marginTop: 8,
   },
 });

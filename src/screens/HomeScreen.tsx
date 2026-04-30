@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import * as Haptics from '../utils/haptics';
+// @ts-ignore
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useIsFocused } from '@react-navigation/native';
 
@@ -41,20 +42,16 @@ function getExerciseKey(record: CachedExerciseRecord) {
   return `${record.exercise.type}:${record.exercise.topic}:${record.exercise.question}:${record.exercise.correctAnswer}`;
 }
 
-const QUICK_CARDS: Array<{
+const TODAY_ACTIONS: Array<{
   icon: string;
   label: string;
   color: string;
   bg: string;
-  action: 'Learn' | 'Practice' | 'PracticeMistakes' | 'Chat' | 'Library' | 'Stats' | 'Subscription';
+  action: 'Library' | 'Stats' | 'PracticeMistakes';
 }> = [
-  { icon: 'book-open-variant', label: 'Слова', color: '#818CF8', bg: 'rgba(99,102,241,0.12)', action: 'Learn' },
-  { icon: 'lightning-bolt', label: 'Практика', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', action: 'Practice' },
+  { icon: 'database', label: 'База вправ', color: '#10B981', bg: 'rgba(16,185,129,0.12)', action: 'Library' },
+  { icon: 'chart-bar', label: 'Статистика', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', action: 'Stats' },
   { icon: 'alert-circle-check-outline', label: 'Мої помилки', color: '#FB7185', bg: 'rgba(244,63,94,0.12)', action: 'PracticeMistakes' },
-  { icon: 'chat-processing', label: 'AI Чат', color: '#10B981', bg: 'rgba(16,185,129,0.12)', action: 'Chat' },
-  { icon: 'database', label: 'База', color: '#C084FC', bg: 'rgba(192,132,252,0.12)', action: 'Library' },
-  { icon: 'chart-bar', label: 'Статистика', color: '#38BDF8', bg: 'rgba(56,189,248,0.12)', action: 'Stats' },
-  { icon: 'crown', label: 'Підписка', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', action: 'Subscription' },
 ];
 
 export function HomeScreen({ navigation }: HomeScreenProps) {
@@ -148,9 +145,9 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     });
   }
 
-  async function openTab(tab: 'Learn' | 'Library' | 'Chat' | 'Stats') {
+  async function openTab(tab: string) {
     await Haptics.selectionAsync();
-    navigation.navigate(tab);
+    (navigation as any).navigate(tab);
   }
 
   async function openSubscription() {
@@ -275,7 +272,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             onPress={() => void openPractice({ quickStart: true, focus: 'mixed' })}
           >
             <MaterialCommunityIcons name="lightning-bolt" size={20} color="#fff" />
-            <Text style={styles.heroCTAText}>Старт 1 хв</Text>
+            <Text style={styles.heroCTAText}>⚡ Почати практику</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -331,23 +328,15 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         )}
       </View>
 
-      {/* ── 3. ШВИДКИЙ СТАРТ ── */}
+      {/* ── 3. СЬОГОДНІ ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚡ Швидкий старт</Text>
+        <Text style={styles.sectionTitle}>Сьогодні</Text>
         <View style={styles.quickGrid}>
-          {QUICK_CARDS.map((card) => (
+          {TODAY_ACTIONS.map((card) => (
             <TouchableOpacity
               key={card.label}
               style={[styles.quickCard, { backgroundColor: card.bg, borderColor: card.color + '30' }]}
-              onPress={() => {
-                if (card.action === 'Subscription') { void openSubscription(); return; }
-                if (card.action === 'Practice') { void openPractice({ focus: 'mixed' }); return; }
-                if (card.action === 'PracticeMistakes') {
-                  void openPractice({ focus: 'mixed', source: 'mistakes' });
-                  return;
-                }
-                void openTab(card.action as any);
-              }}
+              onPress={() => void openTab(card.action)}
             >
               <View style={[styles.quickIconWrap, { backgroundColor: card.color + '18' }]}>
                 <MaterialCommunityIcons name={card.icon as any} size={24} color={card.color} />
@@ -399,20 +388,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         </View>
       )}
 
-      {/* ── 5. КЕРУВАННЯ ДАНИМИ ── */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚙️ Керування</Text>
-        <View style={styles.dangerRow}>
-          <TouchableOpacity style={styles.dangerBtn} onPress={() => void handleResetData()}>
-            <MaterialCommunityIcons name="refresh" size={16} color={C.redLight} />
-            <Text style={styles.dangerBtnText}>Скинути статистику</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.dangerBtn} onPress={() => void handleFullLearningReset()}>
-            <MaterialCommunityIcons name="delete-outline" size={16} color={C.redLight} />
-            <Text style={styles.dangerBtnText}>Почати з нуля</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+
 
     </ScrollView>
   );

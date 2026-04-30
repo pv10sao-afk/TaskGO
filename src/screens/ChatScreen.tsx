@@ -13,9 +13,10 @@ import {
   View,
 } from 'react-native';
 import * as Haptics from '../utils/haptics';
-import Voice, { type SpeechResultsEvent } from '@react-native-voice/voice';
+import Voice from '@react-native-voice/voice';
 import { PermissionsAndroid } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
+// @ts-ignore
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { getAccessStatus } from '../services/access';
@@ -128,9 +129,9 @@ export function ChatScreen() {
           const granted = await PermissionsAndroid.check(
             PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
           );
-          if (mounted) setMicAvailable((available === 1 || available === true) && granted);
+          if (mounted) setMicAvailable(Boolean(available) && granted);
         } else {
-          if (mounted) setMicAvailable(available === 1 || available === true);
+          if (mounted) setMicAvailable(Boolean(available));
         }
       } catch {
         if (mounted) setMicAvailable(false);
@@ -140,11 +141,11 @@ export function ChatScreen() {
     void checkMic();
 
     // Register speech listeners
-    Voice.onSpeechResults = (event: SpeechResultsEvent) => {
+    Voice.onSpeechResults = (event: any) => {
       const text = event.value?.[0]?.trim() ?? '';
       if (text) setDraft(text);
     };
-    Voice.onSpeechPartialResults = (event: SpeechResultsEvent) => {
+    Voice.onSpeechPartialResults = (event: any) => {
       const text = event.value?.[0]?.trim() ?? '';
       if (text) setDraft(text);
     };
@@ -153,18 +154,15 @@ export function ChatScreen() {
 
     return () => {
       mounted = false;
-      Voice.onSpeechResults = undefined;
-      Voice.onSpeechPartialResults = undefined;
-      Voice.onSpeechEnd = undefined;
-      Voice.onSpeechError = undefined;
       try { void Voice.destroy(); } catch {}
     };
   }, []);
 
-  const isLimited =
-    !!accessStatus &&
-    accessStatus.tier !== 'vip' &&
-    (accessStatus.remaining.aiChatMessages ?? 0) <= 0;
+    const isLimited = Boolean(
+      accessStatus &&
+      accessStatus.tier !== 'vip' &&
+      (accessStatus.remaining.aiChatMessages ?? 0) <= 0
+    );
 
   async function handleToggleMic() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

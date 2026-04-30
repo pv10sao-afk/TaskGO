@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import * as Haptics from '../utils/haptics';
+// @ts-ignore
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useIsFocused } from '@react-navigation/native';
 
