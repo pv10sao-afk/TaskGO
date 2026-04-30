@@ -9,7 +9,6 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  NODE_ENV: production
 
 jobs:
   build-android:
@@ -25,7 +24,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Setup Java
+      - name: Setup Java 17
         id: setup-java
         uses: actions/setup-java@v4
         with:
@@ -35,8 +34,15 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Configure npm for reliability
+        run: |
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set fetch-retries 5
+          npm config set network-timeout 300000
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci --prefer-offline || npm ci
 
       - name: Create local.properties
         run: echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
@@ -50,6 +56,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
+            ~/.android/build-cache
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
@@ -57,7 +64,7 @@ jobs:
       - name: Build Android APK (Release)
         env:
           JAVA_HOME: ${{ steps.setup-java.outputs.path }}
-        run: cd android && ./gradlew assembleRelease --no-daemon
+        run: cd android && ./gradlew assembleRelease --no-daemon --build-cache
 
       - name: List APK output
         if: success()
