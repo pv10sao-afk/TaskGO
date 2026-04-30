@@ -20,7 +20,7 @@ import type { AccessFeatureKey, AccessStatus } from '../types';
 type AccessCardConfig = {
   key: AccessFeatureKey;
   title: string;
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  icon: string;
   accent: string;
   tint: string;
 };
@@ -189,7 +189,7 @@ export function SubscriptionScreen() {
               <View key={item.key} style={styles.accessCard}>
                 <View style={styles.accessCardTop}>
                   <View style={[styles.accessIconWrap, { backgroundColor: item.tint }]}>
-                    <MaterialCommunityIcons color={item.accent} name={item.icon} size={24} />
+                    <MaterialCommunityIcons color={item.accent} name={item.icon as any} size={24} />
                   </View>
 
                   <View style={styles.accessTextWrap}>

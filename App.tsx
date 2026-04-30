@@ -1,5 +1,6 @@
 import { StatusBar, ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 
@@ -71,28 +72,30 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#030712" />
-      {isBootstrapping ? (
-        <View style={styles.loadingScreen}>
-          <ActivityIndicator color="#7C3AED" size="large" />
-        </View>
-      ) : onboardingDone ? (
-        <AppNavigator />
-      ) : (
-        <OnboardingScreen
-          onContinue={handleCompleteOnboarding}
-          onSelectDailyMinutes={setSelectedDailyMinutes}
-          onSelectFocus={setSelectedFocus}
-          onSelectGoal={setSelectedGoal}
-          onSelectLevel={setSelectedLevel}
-          selectedDailyMinutes={selectedDailyMinutes}
-          selectedFocus={selectedFocus}
-          selectedGoal={selectedGoal}
-          selectedLevel={selectedLevel}
-        />
-      )}
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor="#030712" />
+        {isBootstrapping ? (
+          <View style={styles.loadingScreen}>
+            <ActivityIndicator color="#7C3AED" size="large" />
+          </View>
+        ) : onboardingDone ? (
+          <AppNavigator />
+        ) : (
+          <OnboardingScreen
+            onContinue={handleCompleteOnboarding}
+            onSelectDailyMinutes={setSelectedDailyMinutes}
+            onSelectFocus={setSelectedFocus}
+            onSelectGoal={setSelectedGoal}
+            onSelectLevel={setSelectedLevel}
+            selectedDailyMinutes={selectedDailyMinutes}
+            selectedFocus={selectedFocus}
+            selectedGoal={selectedGoal}
+            selectedLevel={selectedLevel}
+          />
+        )}
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
