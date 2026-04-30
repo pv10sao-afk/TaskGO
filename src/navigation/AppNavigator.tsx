@@ -1,7 +1,7 @@
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { C } from '../constants/theme';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // @ts-ignore
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { DeviceEventEmitter, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -41,7 +41,7 @@ export type AppRootParamList = {
 };
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
-const Stack = createStackNavigator<AppRootParamList>();
+const Stack = createNativeStackNavigator<AppRootParamList>();
 
 const navigationTheme = {
   ...DarkTheme,
