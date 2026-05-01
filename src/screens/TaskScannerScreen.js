@@ -76,6 +76,9 @@ export default function TaskScannerScreen() {
       <Text className="text-2xl font-bold text-slate-100 mb-6 text-center">
         Scan your Textbook Exercise
       </Text>
+      <Text className="text-slate-500 text-center mb-6 px-4">
+        Hold your phone steady and ensure there is good lighting for the best results.
+      </Text>
 
       {!imageUri ? (
         <View className="flex-1 justify-center items-center">

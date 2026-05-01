@@ -85,6 +85,17 @@ export default function SettingsScreen() {
         />
       </View>
 
+      <Text className="text-xl font-bold text-rose-500 mb-4">Danger Zone</Text>
+      <TouchableOpacity 
+        onPress={async () => {
+          await AsyncStorage.clear();
+          alert('All progress and settings have been reset.');
+        }}
+        className="bg-rose-500/10 p-4 rounded-2xl mb-20 border border-rose-500/50 items-center"
+      >
+        <Text className="text-rose-500 font-bold">Reset All Progress</Text>
+      </TouchableOpacity>
+
     </ScrollView>
   );
 }

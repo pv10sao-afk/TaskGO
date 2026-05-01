@@ -4,7 +4,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import TopBar from '../components/TopBar';
 import { BookA, Headphones, Mic, Trophy } from 'lucide-react-native';
 import { SettingsContext } from '../context/SettingsContext';
-import { getTodaySession } from '../services/srsEngine';
+import { getTodaySession, getVocabularyProgress } from '../services/srsEngine';
 import { LESSONS_DB } from '../data/lessons';
 
 const getIconForCategory = (category) => {
@@ -22,15 +22,21 @@ export default function DashboardScreen() {
   const isFocused = useIsFocused();
   const { userLevel, dailyNewLimit, dailyReviewLimit } = useContext(SettingsContext);
   
-  const [srsStats, setSrsStats] = useState({ newWords: 0, reviews: 0 });
+  const [srsStats, setSrsStats] = useState({ newWords: 0, reviews: 0, learnedToday: 0 });
 
   useEffect(() => {
     if (isFocused) {
       const loadSrs = async () => {
         const session = await getTodaySession(userLevel, dailyNewLimit, dailyReviewLimit);
+        const progress = await getVocabularyProgress();
+        const today = new Date().toISOString().split('T')[0];
+        
+        const learnedTodayCount = Object.values(progress).filter(p => p.lastReviewedDate === today).length;
+
         setSrsStats({
           newWords: session.newWords.length,
-          reviews: session.reviews.length
+          reviews: session.reviews.length,
+          learnedToday: learnedTodayCount
         });
       };
       
@@ -68,6 +74,19 @@ export default function DashboardScreen() {
           <View className="bg-slate-900 px-4 py-2 rounded-xl border border-slate-800">
             <Text className="text-slate-400 text-xs font-bold uppercase">New Words</Text>
             <Text className="text-indigo-400 font-bold text-lg">{srsStats.newWords} words</Text>
+          </View>
+        </View>
+
+        <View className="bg-slate-900 w-full p-4 rounded-3xl border border-slate-800 mb-8">
+          <View className="flex-row justify-between items-center mb-2">
+            <Text className="text-slate-100 font-bold">Daily Goal</Text>
+            <Text className="text-lime-400 font-bold">{srsStats.learnedToday} / {dailyNewLimit + 5} words</Text>
+          </View>
+          <View className="bg-slate-800 h-3 rounded-full overflow-hidden">
+            <View 
+              className="bg-lime-400 h-full" 
+              style={{ width: `${Math.min(100, (srsStats.learnedToday / (dailyNewLimit + 5)) * 100)}%` }} 
+            />
           </View>
         </View>
 

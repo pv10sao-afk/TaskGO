@@ -104,7 +104,8 @@ export const submitWordReview = async (wordId, quality) => {
 
   progress[wordId] = {
     ...nextParams,
-    isLearned: true, // Marked as learned once reviewed
+    isLearned: true,
+    lastReviewedDate: new Date().toISOString().split('T')[0],
   };
 
   await saveVocabularyProgress(progress);

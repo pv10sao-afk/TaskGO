@@ -81,7 +81,7 @@ export const analyzeTaskImage = async (base64Image, promptText) => {
           {
             role: 'user',
             content: [
-              { type: 'text', text: promptText || "Analyze this exercise, solve it, and explain the rules to the student." },
+              { type: 'text', text: promptText || "Analyze this English exercise, solve it, and explain the rules clearly. If the student is Ukrainian, you can use Ukrainian for explanations where it helps clarity." },
               { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
             ]
           }

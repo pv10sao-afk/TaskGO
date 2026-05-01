@@ -1,55 +1,131 @@
-import React, { useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Volume2 } from 'lucide-react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Volume2, BookOpen, Clock, CheckCircle } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
-
+import { useIsFocused } from '@react-navigation/native';
 import { VOCABULARY_DB } from '../data/vocabulary';
-
-const savedVocab = VOCABULARY_DB;
-
+import { getVocabularyProgress } from '../services/srsEngine';
 
 export default function VocabBankScreen() {
-  useEffect(() => {
-    return () => Speech.stop();
+  const isFocused = useIsFocused();
+  const [vocabData, setVocabData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    const progress = await getVocabularyProgress();
+    
+    const merged = VOCABULARY_DB.map(word => ({
+      ...word,
+      progress: progress[word.id] || { repetition: 0, isLearned: false }
+    }));
+
+    // Sort: Learned first, then by level
+    const sorted = merged.sort((a, b) => {
+      if (a.progress.isLearned && !b.progress.isLearned) return -1;
+      if (!a.progress.isLearned && b.progress.isLearned) return 1;
+      return a.level.localeCompare(b.level);
+    });
+
+    setVocabData(sorted);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (isFocused) {
+      loadData();
+    }
+  }, [isFocused, loadData]);
 
   const handlePlay = (word) => {
     Speech.stop();
     Speech.speak(word, { language: 'en-US' });
   };
 
-  return (
-    <ScrollView className="flex-1 bg-slate-950" contentContainerStyle={{ padding: 16 }}>
-      <Text className="text-2xl font-bold text-slate-100 mb-2">My Vocabulary</Text>
-      <Text className="text-slate-400 mb-6">Review the words you saved from your chat sessions.</Text>
+  const getMasteryColor = (repetition) => {
+    if (repetition === 0) return 'bg-slate-800';
+    if (repetition < 3) return 'bg-indigo-500';
+    if (repetition < 6) return 'bg-orange-500';
+    return 'bg-lime-400';
+  };
 
-      {savedVocab.map((item, index) => {
-        const textToRead = item.word;
-        return (
-          <View key={index} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4">
-            <View className="flex-row justify-between items-center mb-2">
-              <View className="flex-row items-center gap-3">
-                <Text className="text-xl font-bold text-lime-400">{textToRead}</Text>
-                <View className="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                  <Text className="text-[10px] font-bold text-slate-400 uppercase">{item.level}</Text>
+  const getMasteryText = (repetition) => {
+    if (repetition === 0) return 'New';
+    if (repetition < 3) return 'Learning';
+    if (repetition < 6) return 'Familiar';
+    return 'Mastered';
+  };
+
+  if (loading) {
+    return (
+      <View className="flex-1 bg-slate-950 justify-center items-center">
+        <ActivityIndicator size="large" color="#a3e635" />
+      </View>
+    );
+  }
+
+  return (
+    <View className="flex-1 bg-slate-950">
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        <View className="mb-8">
+          <Text className="text-3xl font-bold text-slate-100 mb-2">Vocab Bank</Text>
+          <Text className="text-slate-400">Track your progress and mastery of English words.</Text>
+        </View>
+
+        <View className="flex-row gap-4 mb-8">
+          <View className="flex-1 bg-slate-900 p-4 rounded-2xl border border-slate-800 items-center">
+            <BookOpen size={24} color="#a3e635" />
+            <Text className="text-slate-100 font-bold text-xl mt-2">
+              {vocabData.filter(v => v.progress.isLearned).length}
+            </Text>
+            <Text className="text-slate-500 text-xs font-bold uppercase">Learned</Text>
+          </View>
+          <View className="flex-1 bg-slate-900 p-4 rounded-2xl border border-slate-800 items-center">
+            <CheckCircle size={24} color="#818cf8" />
+            <Text className="text-slate-100 font-bold text-xl mt-2">
+              {vocabData.filter(v => v.progress.repetition >= 6).length}
+            </Text>
+            <Text className="text-slate-500 text-xs font-bold uppercase">Mastered</Text>
+          </View>
+        </View>
+
+        {vocabData.map((item, index) => (
+          <View key={index} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-4 shadow-sm">
+            <View className="flex-row justify-between items-start mb-4">
+              <View className="flex-1">
+                <View className="flex-row items-center gap-3 mb-1">
+                  <Text className="text-2xl font-bold text-slate-100">{item.word}</Text>
+                  <View className="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                    <Text className="text-[10px] font-bold text-slate-400 uppercase">{item.level}</Text>
+                  </View>
                 </View>
+                <Text className="text-slate-400 font-medium">🇺🇦 {item.translation}</Text>
               </View>
-              <TouchableOpacity onPress={() => handlePlay(textToRead)} className="p-2 bg-slate-800 rounded-full">
-                <Volume2 size={20} color="#94a3b8" />
+              <TouchableOpacity 
+                onPress={() => handlePlay(item.word)} 
+                className="p-3 bg-slate-800 rounded-2xl"
+              >
+                <Volume2 size={24} color="#a3e635" />
               </TouchableOpacity>
             </View>
-            <Text className="text-slate-300 italic mb-1">"{item.meaning}"</Text>
-            <Text className="text-slate-400 mb-3">🇺🇦 {item.translation}</Text>
-            
-            {item.examples && item.examples.length > 0 && (
-              <View className="mt-2 pt-2 border-t border-slate-800/50">
-                <Text className="text-slate-500 text-xs uppercase font-bold mb-1">Example:</Text>
-                <Text className="text-slate-300 text-sm italic">{item.examples[0]}</Text>
+
+            <View className="flex-row items-center justify-between mt-2 pt-4 border-t border-slate-800/50">
+              <View className="flex-row items-center gap-2">
+                <View className={`w-3 h-3 rounded-full ${getMasteryColor(item.progress.repetition)}`} />
+                <Text className="text-slate-300 font-bold">{getMasteryText(item.progress.repetition)}</Text>
               </View>
-            )}
+              {item.progress.nextReviewDate && (
+                <View className="flex-row items-center gap-1">
+                  <Clock size={14} color="#64748b" />
+                  <Text className="text-slate-500 text-xs">
+                    Next: {new Date(item.progress.nextReviewDate).toLocaleDateString()}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
-        );
-      })}
-    </ScrollView>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
