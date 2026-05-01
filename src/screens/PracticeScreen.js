@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Image, View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { getTodaySession, submitWordReview } from '../services/srsEngine';
@@ -89,13 +89,27 @@ export default function PracticeScreen() {
         </Text>
       </View>
 
-      <View className="flex-1 justify-center items-center mb-8">
+      <ScrollView className="flex-1 mb-8" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text className="text-slate-400 text-sm font-bold uppercase mb-2">
           {currentWord.progress?.isLearned ? 'Review' : 'New Word'} • Level {currentWord.level}
         </Text>
+        {!!currentWord.deck && (
+          <Text className="text-slate-500 text-xs font-bold uppercase mb-4">{currentWord.deck}</Text>
+        )}
+        {!!currentWord.imageUrl && (
+          <Image
+            source={{ uri: currentWord.imageUrl }}
+            className="w-full h-56 rounded-2xl mb-6 bg-slate-900"
+            resizeMode="cover"
+          />
+        )}
         <Text className="text-5xl font-bold text-slate-100 mb-6 text-center">
           {currentWord.word}
         </Text>
+        <View className="flex-row gap-2 mb-4">
+          {!!currentWord.partOfSpeech && <Text className="text-indigo-300 font-bold">{currentWord.partOfSpeech}</Text>}
+          {!!currentWord.ipa && <Text className="text-slate-500 font-bold">{currentWord.ipa}</Text>}
+        </View>
         
         {showAnswer ? (
           <View className="items-center w-full">
@@ -110,13 +124,20 @@ export default function PracticeScreen() {
                 ))}
               </View>
             )}
+
+            {!!currentWord.imagePrompt && !currentWord.imageUrl && (
+              <View className="bg-slate-900 p-4 rounded-xl w-full border border-slate-800 mt-4">
+                <Text className="text-slate-400 text-xs font-bold uppercase mb-2">Image Prompt</Text>
+                <Text className="text-slate-300">{currentWord.imagePrompt}</Text>
+              </View>
+            )}
           </View>
         ) : (
           <Text className="text-slate-500 italic mt-8 text-center">
             Think of the meaning, then tap to reveal.
           </Text>
         )}
-      </View>
+      </ScrollView>
 
       <View className="pb-8">
         {!showAnswer ? (

@@ -70,6 +70,49 @@ export default function DashboardScreen() {
   ];
   const rewardText = streak >= 7 ? '7-day reward unlocked' : `${Math.max(0, 7 - streak)} days to reward`;
 
+  const openLesson = (lesson, isActive) => {
+    if (!isActive) return;
+    if (lesson.category === 'Roleplay') {
+      navigation.navigate('Chat', { prompt: lesson.prompt, title: lesson.title });
+    } else {
+      navigation.navigate('Exercise', { lessonId: lesson.id, title: lesson.title });
+    }
+  };
+
+  const renderLessonButton = (lesson) => {
+    const Icon = lesson.icon;
+    const isActive = !lesson.completed && !lesson.locked;
+
+    let bgColor = 'bg-slate-800';
+    let borderColor = 'border-slate-700';
+    let iconColor = '#64748b';
+
+    if (lesson.completed) {
+      bgColor = 'bg-lime-400/20';
+      borderColor = 'border-lime-400/50';
+      iconColor = '#a3e635';
+    } else if (isActive) {
+      bgColor = 'bg-lime-400';
+      borderColor = 'border-lime-500';
+      iconColor = '#020617';
+    }
+
+    return (
+      <View key={lesson.id} className="items-center w-1/2 mb-5">
+        <TouchableOpacity
+          disabled={lesson.locked}
+          onPress={() => openLesson(lesson, isActive)}
+          className={`w-24 h-24 rounded-full items-center justify-center border-b-4 ${bgColor} ${borderColor} ${lesson.locked ? 'opacity-50' : ''}`}
+        >
+          <Icon size={40} color={iconColor} />
+        </TouchableOpacity>
+        <Text className={`mt-2 font-bold text-center px-2 ${lesson.locked ? 'text-slate-600' : 'text-slate-300'}`}>
+          {lesson.title}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <View className="flex-1 bg-slate-950">
       <TopBar />
@@ -100,6 +143,13 @@ export default function DashboardScreen() {
               className="bg-lime-400 h-full"
               style={{ width: `${Math.min(100, (srsStats.learnedToday / dailyGoalTotal) * 100)}%` }}
             />
+          </View>
+        </View>
+
+        <View className="w-full mb-6">
+          <Text className="text-slate-100 font-bold text-xl mb-4">Lessons</Text>
+          <View className="flex-row flex-wrap justify-between">
+            {displayLessons.map(renderLessonButton)}
           </View>
         </View>
 
@@ -166,51 +216,6 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         )}
 
-        {displayLessons.map((lesson, index) => {
-          const Icon = lesson.icon;
-          const isActive = !lesson.completed && !lesson.locked;
-          
-          let bgColor = 'bg-slate-800';
-          let borderColor = 'border-slate-700';
-          let iconColor = '#64748b';
-          
-          if (lesson.completed) {
-            bgColor = 'bg-lime-400/20';
-            borderColor = 'border-lime-400/50';
-            iconColor = '#a3e635';
-          } else if (isActive) {
-            bgColor = 'bg-lime-400';
-            borderColor = 'border-lime-500';
-            iconColor = '#020617';
-          }
-
-          // Simple zigzag pattern
-          const marginLeft = index % 2 === 0 ? 0 : 60;
-          const marginRight = index % 2 === 0 ? 60 : 0;
-
-          return (
-            <View key={lesson.id} className="items-center mb-6" style={{ marginLeft, marginRight }}>
-              <TouchableOpacity
-                disabled={lesson.locked}
-                onPress={() => {
-                  if (isActive) {
-                    if (lesson.category === 'Roleplay') {
-                      navigation.navigate('Chat', { prompt: lesson.prompt });
-                    } else {
-                      navigation.navigate('Exercise', { lessonId: lesson.id, title: lesson.title });
-                    }
-                  }
-                }}
-                className={`w-24 h-24 rounded-full items-center justify-center border-b-4 ${bgColor} ${borderColor} ${lesson.locked ? 'opacity-50' : ''}`}
-              >
-                <Icon size={40} color={iconColor} />
-              </TouchableOpacity>
-              <Text className={`mt-2 font-bold ${lesson.locked ? 'text-slate-600' : 'text-slate-300'}`}>
-                {lesson.title}
-              </Text>
-            </View>
-          );
-        })}
       </ScrollView>
     </View>
   );

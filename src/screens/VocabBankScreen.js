@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Volume2, BookOpen, Clock, CheckCircle } from 'lucide-react-native';
+import { Image, View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Volume2, BookOpen, Clock, CheckCircle, Image as ImageIcon } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { useIsFocused } from '@react-navigation/native';
 import { VOCABULARY_DB } from '../data/vocabulary';
@@ -121,6 +121,13 @@ export default function VocabBankScreen() {
           </View>
         ) : filteredVocab.map((item, index) => (
           <View key={index} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-4 shadow-sm">
+            {!!item.imageUrl && (
+              <Image
+                source={{ uri: item.imageUrl }}
+                className="w-full h-44 rounded-2xl mb-4 bg-slate-800"
+                resizeMode="cover"
+              />
+            )}
             <View className="flex-row justify-between items-start mb-4">
               <View className="flex-1">
                 <View className="flex-row items-center gap-3 mb-1">
@@ -128,6 +135,17 @@ export default function VocabBankScreen() {
                   <View className="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                     <Text className="text-[10px] font-bold text-slate-400 uppercase">{item.level}</Text>
                   </View>
+                </View>
+                <View className="flex-row flex-wrap gap-2 mb-2">
+                  {!!item.partOfSpeech && (
+                    <Text className="text-indigo-300 text-xs font-bold uppercase">{item.partOfSpeech}</Text>
+                  )}
+                  {!!item.ipa && (
+                    <Text className="text-slate-500 text-xs font-bold">{item.ipa}</Text>
+                  )}
+                  {!!item.deck && (
+                    <Text className="text-slate-500 text-xs font-bold">Deck: {item.deck}</Text>
+                  )}
                 </View>
                 <Text className="text-slate-400 font-medium">🇺🇦 {item.translation}</Text>
                 {!!item.meaning && <Text className="text-slate-500 mt-2">{item.meaning}</Text>}
@@ -159,6 +177,13 @@ export default function VocabBankScreen() {
               <View className="mt-4 bg-slate-800/60 rounded-xl p-3">
                 <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Example</Text>
                 <Text className="text-slate-300" numberOfLines={2}>{item.examples[0]}</Text>
+              </View>
+            )}
+
+            {!item.imageUrl && !!item.imagePrompt && (
+              <View className="mt-4 bg-slate-800/60 rounded-xl p-3 flex-row">
+                <ImageIcon size={16} color="#94a3b8" />
+                <Text className="text-slate-400 text-xs ml-2 flex-1" numberOfLines={2}>{item.imagePrompt}</Text>
               </View>
             )}
           </View>

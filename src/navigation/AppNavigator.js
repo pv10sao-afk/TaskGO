@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, MessageCircle, Camera, BookOpen } from 'lucide-react-native';
 
 // Import Screens
@@ -17,6 +18,8 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function TabNavigator() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -32,12 +35,12 @@ function TabNavigator() {
         tabBarStyle: {
           backgroundColor: '#020617',
           borderTopColor: '#1e293b',
-          height: 58,
-          paddingTop: 4,
-          paddingBottom: 6,
+          height: 72 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 10),
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: '700',
         },
         headerStyle: {
@@ -53,10 +56,10 @@ function TabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="Chat" component={ChatScreen} options={{ title: 'AI Tutor', tabBarLabel: 'Tutor' }} />
-      <Tab.Screen name="Scanner" component={TaskScannerScreen} options={{ title: 'Upload Task', tabBarLabel: 'Scan', unmountOnBlur: true }} />
-      <Tab.Screen name="Vocab" component={VocabBankScreen} options={{ title: 'Vocab Bank', tabBarLabel: 'Vocab' }} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: 'Dashboard' }} />
+      <Tab.Screen name="Chat" component={ChatScreen} options={{ title: 'AI Tutor', tabBarLabel: 'AI Tutor' }} />
+      <Tab.Screen name="Scanner" component={TaskScannerScreen} options={{ title: 'Upload Task', tabBarLabel: 'Upload Task', unmountOnBlur: true }} />
+      <Tab.Screen name="Vocab" component={VocabBankScreen} options={{ title: 'Vocab Bank', tabBarLabel: 'Vocab Bank' }} />
     </Tab.Navigator>
   );
 }

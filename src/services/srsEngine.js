@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VOCABULARY_DB } from '../data/vocabulary';
+import { getCustomVocabulary } from './learningStorage';
 
 // Basic SuperMemo-2 algorithm implementation
 export const calculateNextReview = (repetition, easeFactor, interval, quality) => {
@@ -53,10 +54,11 @@ export const saveVocabularyProgress = async (progressMap) => {
 // Gets the session based on user level and SRS
 export const getTodaySession = async (userLevel, newLimit, reviewLimit) => {
   const progress = await getVocabularyProgress();
+  const customVocabulary = await getCustomVocabulary();
   const now = new Date();
 
   // Merge static DB with progress
-  const mergedDb = VOCABULARY_DB.map(word => ({
+  const mergedDb = [...customVocabulary, ...VOCABULARY_DB].map(word => ({
     ...word,
     progress: progress[word.id] || {
       repetition: 0,
@@ -77,7 +79,7 @@ export const getTodaySession = async (userLevel, newLimit, reviewLimit) => {
   // Find new words: words at the user's level that are not yet learned
   const newWords = mergedDb.filter(w => 
     !w.progress.isLearned && 
-    w.level === userLevel
+    (w.level === userLevel || w.level === 'Custom')
   );
 
   return {

@@ -1,9 +1,9 @@
 import React, { useState, useRef, useContext, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
-import { Send, Mic, Square, Languages, History, MessageSquarePlus, BookPlus } from 'lucide-react-native';
+import { Send, Mic, Square, Languages, History, MessageSquarePlus, BookPlus, X } from 'lucide-react-native';
 import { Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Bubble from '../components/Bubble';
 import MistakeCorrection from '../components/MistakeCorrection';
 import { sendChatMessage, transcribeAudio } from '../services/groqService';
@@ -40,14 +40,18 @@ const extractWords = (text) => {
 };
 
 export default function ChatScreen() {
+  const navigation = useNavigation();
   const route = useRoute();
   const lessonPrompt = route.params?.prompt || '';
+  const lessonTitle = route.params?.title || 'Lesson roleplay';
   const [messages, setMessages] = useState([createWelcomeMessage()]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [recording, setRecording] = useState(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [mode, setMode] = useState(lessonPrompt ? 'conversation' : 'conversation');
+  const [activeLessonPrompt, setActiveLessonPrompt] = useState(lessonPrompt);
+  const [activeLessonTitle, setActiveLessonTitle] = useState(lessonTitle);
   const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState(Date.now().toString());
   
@@ -61,6 +65,13 @@ export default function ChatScreen() {
     };
     loadSessions();
   }, []);
+
+  useEffect(() => {
+    if (!lessonPrompt) return;
+    setActiveLessonPrompt(lessonPrompt);
+    setActiveLessonTitle(lessonTitle);
+    setMode('conversation');
+  }, [lessonPrompt, lessonTitle]);
 
   useEffect(() => {
     return () => {
@@ -78,6 +89,8 @@ export default function ChatScreen() {
       const session = {
         id: sessionId,
         mode,
+        lessonPrompt: activeLessonPrompt,
+        lessonTitle: activeLessonTitle,
         title: firstUserMessage ? firstUserMessage.slice(0, 42) : 'AI Tutor chat',
         messages,
       };
@@ -86,7 +99,7 @@ export default function ChatScreen() {
       setSessions(saved);
     };
     persist();
-  }, [messages, mode, sessionId]);
+  }, [messages, mode, sessionId, activeLessonPrompt, activeLessonTitle]);
 
   const startRecording = async () => {
     try {
@@ -132,7 +145,7 @@ export default function ChatScreen() {
     try {
       const response = await sendChatMessage(history, newUserMsg.content.message, {
         mode,
-        extraInstruction: lessonPrompt,
+        extraInstruction: activeLessonPrompt,
       });
 
       const modelMessage = {
@@ -166,15 +179,33 @@ export default function ChatScreen() {
 
   const startNewChat = () => {
     Speech.stop();
+    navigation.setParams({ prompt: undefined, title: undefined });
+    setActiveLessonPrompt('');
+    setActiveLessonTitle('Lesson roleplay');
     setSessionId(Date.now().toString());
     setMessages([createWelcomeMessage()]);
     setInputText('');
+  };
+
+  const handleModeSelect = (nextMode) => {
+    navigation.setParams({ prompt: undefined, title: undefined });
+    setActiveLessonPrompt('');
+    setActiveLessonTitle('Lesson roleplay');
+    setMode(nextMode);
+  };
+
+  const clearLessonContext = () => {
+    navigation.setParams({ prompt: undefined, title: undefined });
+    setActiveLessonPrompt('');
+    setActiveLessonTitle('Lesson roleplay');
   };
 
   const loadSession = (session) => {
     Speech.stop();
     setSessionId(session.id);
     setMode(session.mode || 'conversation');
+    setActiveLessonPrompt(session.lessonPrompt || '');
+    setActiveLessonTitle(session.lessonTitle || 'Lesson roleplay');
     setMessages(session.messages?.length ? session.messages : [createWelcomeMessage()]);
   };
 
@@ -207,7 +238,7 @@ export default function ChatScreen() {
             {MODES.map(item => (
               <TouchableOpacity
                 key={item.id}
-                onPress={() => setMode(item.id)}
+                onPress={() => handleModeSelect(item.id)}
                 className={`flex-1 py-2 rounded-full border items-center ${mode === item.id ? 'bg-lime-400 border-lime-400' : 'bg-slate-900 border-slate-800'}`}
               >
                 <Text className={`text-xs font-bold ${mode === item.id ? 'text-slate-950' : 'text-slate-300'}`}>
@@ -216,6 +247,17 @@ export default function ChatScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          {!!activeLessonPrompt && (
+            <View className="mb-2 bg-indigo-500/10 border border-indigo-500/40 rounded-2xl px-3 py-2 flex-row items-center">
+              <Text className="flex-1 text-indigo-200 text-xs font-bold" numberOfLines={1}>
+                Roleplay active: {activeLessonTitle}
+              </Text>
+              <TouchableOpacity onPress={clearLessonContext} className="p-1">
+                <X size={14} color="#c4b5fd" />
+              </TouchableOpacity>
+            </View>
+          )}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
             <TouchableOpacity onPress={startNewChat} className="mr-2 px-3 py-2 rounded-full bg-slate-900 border border-slate-800 flex-row items-center">

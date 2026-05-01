@@ -7,6 +7,16 @@ import * as Speech from 'expo-speech';
 import { LESSONS_DB } from '../data/lessons';
 import { saveMistake } from '../services/learningStorage';
 
+const CHOICE_TYPES = ['multiple_choice', 'fill_blank', 'true_false'];
+const TEXT_TYPES = ['translation', 'short_answer', 'error_correction'];
+
+const normalizeAnswer = (value) => String(value || '').trim().toLowerCase().replace(/[.!?]+$/g, '');
+const getTextPlaceholder = (type) => {
+  if (type === 'error_correction') return 'Rewrite the sentence correctly';
+  if (type === 'short_answer') return 'Type a short answer';
+  return 'Type in English';
+};
+
 export default function ExerciseScreen() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -47,7 +57,7 @@ export default function ExerciseScreen() {
     let studentAnswer = '';
     let correctAnswer = '';
 
-    if (exercise.type === 'multiple_choice') {
+    if (CHOICE_TYPES.includes(exercise.type)) {
       correct = selectedOption === exercise.correct_answer;
       studentAnswer = selectedOption;
       correctAnswer = exercise.correct_answer;
@@ -57,9 +67,9 @@ export default function ExerciseScreen() {
       correct = built === target;
       studentAnswer = built;
       correctAnswer = target;
-    } else if (exercise.type === 'translation') {
-      // Basic fuzzy check (case insensitive)
-      correct = translationInput.trim().toLowerCase() === (exercise.correct_answer || '').toLowerCase();
+    } else if (TEXT_TYPES.includes(exercise.type)) {
+      const acceptedAnswers = exercise.accepted_answers || [exercise.correct_answer];
+      correct = acceptedAnswers.some(answer => normalizeAnswer(translationInput) === normalizeAnswer(answer));
       studentAnswer = translationInput.trim();
       correctAnswer = exercise.correct_answer;
     }
@@ -95,6 +105,8 @@ export default function ExerciseScreen() {
       setBuiltSentence([]);
       if (nextEx.type === 'sentence_builder') {
         setAvailableWords([...(nextEx.words || [])].sort(() => Math.random() - 0.5));
+      } else {
+        setAvailableWords([]);
       }
     } else {
       // Finished all exercises in the lesson
@@ -153,6 +165,13 @@ export default function ExerciseScreen() {
   }
 
   const currentExercise = exercises[currentIndex];
+  const isChoiceExercise = CHOICE_TYPES.includes(currentExercise.type);
+  const isTextExercise = TEXT_TYPES.includes(currentExercise.type);
+  const isAnswerMissing = (
+    (isChoiceExercise && !selectedOption) ||
+    (isTextExercise && !translationInput.trim()) ||
+    (currentExercise.type === 'sentence_builder' && builtSentence.length === 0)
+  );
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -171,8 +190,8 @@ export default function ExerciseScreen() {
         <Text className="text-2xl font-bold text-slate-100 mb-8">{currentExercise.question}</Text>
 
         <ScrollView className="flex-1 mb-4">
-          {/* Multiple Choice */}
-          {currentExercise.type === 'multiple_choice' && (
+          {/* Choice-based exercises */}
+          {isChoiceExercise && (
             <View className="gap-4">
               {(currentExercise.options || []).map((option, idx) => (
                 <TouchableOpacity 
@@ -224,14 +243,14 @@ export default function ExerciseScreen() {
             </View>
           )}
 
-          {/* Translation */}
-          {currentExercise.type === 'translation' && (
+          {/* Text answer exercises */}
+          {isTextExercise && (
             <View>
               <TextInput
                 editable={!isChecked}
                 value={translationInput}
                 onChangeText={setTranslationInput}
-                placeholder="Type in English"
+                placeholder={getTextPlaceholder(currentExercise.type)}
                 placeholderTextColor="#64748b"
                 className="bg-slate-900 text-slate-100 p-4 rounded-2xl border border-slate-800 text-lg min-h-32"
                 multiline
@@ -249,11 +268,10 @@ export default function ExerciseScreen() {
                 <Text className={`font-bold ${isCorrect ? 'text-lime-400' : 'text-rose-400'}`}>
                   {isCorrect ? "Excellent!" : "Not quite right"}
                 </Text>
-                {!isCorrect && currentExercise.correct_answer && (
-                  <Text className="text-slate-300 mt-1">Correct answer: {currentExercise.correct_answer}</Text>
-                )}
-                {!isCorrect && currentExercise.correct_order && (
-                  <Text className="text-slate-300 mt-1">Correct answer: {currentExercise.correct_order.join(' ')}</Text>
+                {!isCorrect && (
+                  <Text className="text-slate-300 mt-1">
+                    Correct answer: {currentExercise.correct_answer || currentExercise.correct_order?.join(' ')}
+                  </Text>
                 )}
               </View>
             </View>
@@ -261,26 +279,13 @@ export default function ExerciseScreen() {
 
           <TouchableOpacity 
             onPress={isChecked ? handleNext : handleCheck}
-            disabled={
-              !isChecked && 
-              (currentExercise.type === 'multiple_choice' && !selectedOption) ||
-              (currentExercise.type === 'translation' && !translationInput.trim()) ||
-              (currentExercise.type === 'sentence_builder' && builtSentence.length === 0)
-            }
+            disabled={!isChecked && isAnswerMissing}
             className={`py-4 rounded-full items-center ${
-              (!isChecked && (
-                (currentExercise.type === 'multiple_choice' && !selectedOption) ||
-                (currentExercise.type === 'translation' && !translationInput.trim()) ||
-                (currentExercise.type === 'sentence_builder' && builtSentence.length === 0)
-              )) ? 'bg-slate-800' : isChecked ? isCorrect ? 'bg-lime-400' : 'bg-rose-500' : 'bg-indigo-500'
+              (!isChecked && isAnswerMissing) ? 'bg-slate-800' : isChecked ? isCorrect ? 'bg-lime-400' : 'bg-rose-500' : 'bg-indigo-500'
             }`}
           >
             <Text className={`font-bold text-lg ${
-              (!isChecked && (
-                (currentExercise.type === 'multiple_choice' && !selectedOption) ||
-                (currentExercise.type === 'translation' && !translationInput.trim()) ||
-                (currentExercise.type === 'sentence_builder' && builtSentence.length === 0)
-              )) ? 'text-slate-500' : isChecked ? 'text-slate-950' : 'text-white'
+              (!isChecked && isAnswerMissing) ? 'text-slate-500' : isChecked ? 'text-slate-950' : 'text-white'
             }`}>
               {isChecked ? "Continue" : "Check Answer"}
             </Text>
