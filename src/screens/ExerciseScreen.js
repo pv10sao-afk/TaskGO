@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react-native';
 import { ProgressContext } from '../context/ProgressContext';
@@ -129,7 +129,7 @@ export default function ExerciseScreen() {
         <CheckCircle2 size={80} color="#a3e635" className="mb-6" />
         <Text className="text-3xl font-bold text-slate-100 mb-2">Lesson Complete!</Text>
         <Text className="text-slate-400 text-lg mb-8">+50 XP Earned</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Dashboard')} className="bg-lime-400 px-10 py-4 rounded-full">
+        <TouchableOpacity onPress={() => navigation.goBack()} className="bg-lime-400 px-10 py-4 rounded-full">
           <Text className="text-slate-950 font-bold text-lg">Continue</Text>
         </TouchableOpacity>
       </View>
@@ -140,7 +140,7 @@ export default function ExerciseScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <View className="flex-1 bg-slate-950 p-6 pt-12">
+      <View className="flex-1 bg-slate-950 p-6 pt-12 pb-12">
         
         {/* Header */}
         <View className="flex-row items-center mb-8">
@@ -154,7 +154,7 @@ export default function ExerciseScreen() {
 
         <Text className="text-2xl font-bold text-slate-100 mb-8">{currentExercise.question}</Text>
 
-        <View className="flex-1">
+        <ScrollView className="flex-1 mb-4">
           {/* Multiple Choice */}
           {currentExercise.type === 'multiple_choice' && (
             <View className="gap-4">
@@ -222,7 +222,7 @@ export default function ExerciseScreen() {
               />
             </View>
           )}
-        </View>
+        </ScrollView>
 
         {/* Footer Area */}
         <View className="pt-6">

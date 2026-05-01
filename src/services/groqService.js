@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const getApiKey = async () => {
   const storedKey = await AsyncStorage.getItem('@groqApiKey');
-  return storedKey || process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
+  return (storedKey || process.env.EXPO_PUBLIC_GROQ_API_KEY || '').trim();
 };
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -53,13 +53,14 @@ export const sendChatMessage = async (chatHistory, newMessage) => {
     const data = await response.json();
     if (data.error) {
       console.error("Groq API Error:", data.error);
-      return { message: "Sorry, I had an error processing that.", correction: "", explanation: "" };
+      const errMsg = data.error.message || JSON.stringify(data.error);
+      return { message: `API Error: ${errMsg}`, correction: "", explanation: "" };
     }
     
     return JSON.parse(data.choices[0].message.content);
   } catch (error) {
     console.error("Groq Chat Error:", error);
-    return { message: "Sorry, I had an error processing that.", correction: "", explanation: "" };
+    return { message: `Connection Error: ${error.message}`, correction: "", explanation: "" };
   }
 };
 
