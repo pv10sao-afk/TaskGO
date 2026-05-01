@@ -148,7 +148,7 @@ export default function ExerciseScreen() {
             <ArrowLeft size={24} color="#64748b" />
           </TouchableOpacity>
           <View className="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden">
-            <View className="bg-lime-400 h-full" style={{ width: \`\${(currentIndex / exercises.length) * 100}%\` }} />
+            <View className="bg-lime-400 h-full" style={{ width: `${(currentIndex / exercises.length) * 100}%` }} />
           </View>
         </View>
 
@@ -163,15 +163,15 @@ export default function ExerciseScreen() {
                   key={idx}
                   disabled={isChecked}
                   onPress={() => setSelectedOption(option)}
-                  className={\`p-4 rounded-2xl border-2 \${
+                  className={`p-4 rounded-2xl border-2 ${
                     selectedOption === option 
                       ? isChecked 
                         ? isCorrect ? 'bg-lime-400/20 border-lime-400' : 'bg-rose-500/20 border-rose-500'
                         : 'bg-indigo-500/20 border-indigo-500' 
                       : 'bg-slate-900 border-slate-800'
-                  }\`}
+                  }`}
                 >
-                  <Text className={\`text-lg font-bold \${selectedOption === option && !isChecked ? 'text-indigo-400' : 'text-slate-300'}\`}>
+                  <Text className={`text-lg font-bold ${selectedOption === option && !isChecked ? 'text-indigo-400' : 'text-slate-300'}`}>
                     {option}
                   </Text>
                 </TouchableOpacity>
@@ -227,10 +227,10 @@ export default function ExerciseScreen() {
         {/* Footer Area */}
         <View className="pt-6">
           {isChecked && (
-            <View className={\`p-4 rounded-2xl mb-4 flex-row items-center \${isCorrect ? 'bg-lime-400/20' : 'bg-rose-500/20'}\`}>
+            <View className={`p-4 rounded-2xl mb-4 flex-row items-center ${isCorrect ? 'bg-lime-400/20' : 'bg-rose-500/20'}`}>
               {isCorrect ? <CheckCircle2 color="#a3e635" size={24} /> : <XCircle color="#fb7185" size={24} />}
               <View className="ml-3">
-                <Text className={\`font-bold \${isCorrect ? 'text-lime-400' : 'text-rose-400'}\`}>
+                <Text className={`font-bold ${isCorrect ? 'text-lime-400' : 'text-rose-400'}`}>
                   {isCorrect ? "Excellent!" : "Not quite right"}
                 </Text>
                 {!isCorrect && currentExercise.correct_answer && (
@@ -251,21 +251,21 @@ export default function ExerciseScreen() {
               (currentExercise.type === 'translation' && !translationInput.trim()) ||
               (currentExercise.type === 'sentence_builder' && builtSentence.length === 0)
             }
-            className={\`py-4 rounded-full items-center \${
+            className={`py-4 rounded-full items-center ${
               (!isChecked && (
                 (currentExercise.type === 'multiple_choice' && !selectedOption) ||
                 (currentExercise.type === 'translation' && !translationInput.trim()) ||
                 (currentExercise.type === 'sentence_builder' && builtSentence.length === 0)
               )) ? 'bg-slate-800' : isChecked ? isCorrect ? 'bg-lime-400' : 'bg-rose-500' : 'bg-indigo-500'
-            }\`}
+            }`}
           >
-            <Text className={\`font-bold text-lg \${
+            <Text className={`font-bold text-lg ${
               (!isChecked && (
                 (currentExercise.type === 'multiple_choice' && !selectedOption) ||
                 (currentExercise.type === 'translation' && !translationInput.trim()) ||
                 (currentExercise.type === 'sentence_builder' && builtSentence.length === 0)
               )) ? 'text-slate-500' : isChecked ? 'text-slate-950' : 'text-white'
-            }\`}>
+            }`}>
               {isChecked ? "Continue" : "Check Answer"}
             </Text>
           </TouchableOpacity>
