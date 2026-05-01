@@ -1,4 +1,10 @@
-const API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const getApiKey = async () => {
+  const storedKey = await AsyncStorage.getItem('@groqApiKey');
+  return storedKey || process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
+};
+
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 const SYSTEM_INSTRUCTION = `You are a patient, encouraging English Teacher for a Ukrainian-speaking student. Use a supportive tone, always correct grammar errors, and suggest more natural phrasing. 
@@ -7,7 +13,8 @@ If the user makes a mistake, put the corrected sentence in "correction" and the 
 Do NOT include any text outside the JSON object. Return purely the JSON object.`;
 
 export const sendChatMessage = async (chatHistory, newMessage) => {
-  if (!API_KEY) return { message: "API key missing. Please set EXPO_PUBLIC_GROQ_API_KEY in .env", correction: "", explanation: "" };
+  const apiKey = await getApiKey();
+  if (!apiKey) return { message: "API key missing. Please set it in the Settings screen.", correction: "", explanation: "" };
   
   try {
     // Map existing history format to OpenAI format
@@ -33,7 +40,7 @@ export const sendChatMessage = async (chatHistory, newMessage) => {
     const response = await fetch(GROQ_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -57,13 +64,14 @@ export const sendChatMessage = async (chatHistory, newMessage) => {
 };
 
 export const analyzeTaskImage = async (base64Image, promptText) => {
-  if (!API_KEY) return "API key missing. Please set EXPO_PUBLIC_GROQ_API_KEY in .env";
+  const apiKey = await getApiKey();
+  if (!apiKey) return "API key missing. Please set it in the Settings screen.";
 
   try {
     const response = await fetch(GROQ_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -94,7 +102,8 @@ export const analyzeTaskImage = async (base64Image, promptText) => {
 };
 
 export const transcribeAudio = async (audioUri) => {
-  if (!API_KEY) return "";
+  const apiKey = await getApiKey();
+  if (!apiKey) return "";
   try {
     const formData = new FormData();
     formData.append('file', {
@@ -107,7 +116,7 @@ export const transcribeAudio = async (audioUri) => {
     const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: formData,
     });

@@ -7,22 +7,26 @@ export const SettingsProvider = ({ children }) => {
   const [autoPlayAudio, setAutoPlayAudio] = useState(false);
   const [userLevel, setUserLevel] = useState('A1');
   const [dailyNewLimit, setDailyNewLimit] = useState(5);
-  const [dailyReviewLimit, setDailyReviewLimit] = useState(15);
+  const [dailyReviewLimit, setDailyReviewLimit] = useState(20);
+  const [groqApiKey, setGroqApiKey] = useState('');
 
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const storedAutoPlay = await AsyncStorage.getItem('@autoPlayAudio');
-        if (storedAutoPlay !== null) setAutoPlayAudio(JSON.parse(storedAutoPlay));
+        const storedAudio = await AsyncStorage.getItem('@autoPlayAudio');
+        if (storedAudio !== null) setAutoPlayAudio(JSON.parse(storedAudio));
 
         const storedLevel = await AsyncStorage.getItem('@userLevel');
         if (storedLevel !== null) setUserLevel(storedLevel);
 
-        const storedNew = await AsyncStorage.getItem('@dailyNewLimit');
-        if (storedNew !== null) setDailyNewLimit(JSON.parse(storedNew));
+        const storedNewLimit = await AsyncStorage.getItem('@dailyNewLimit');
+        if (storedNewLimit !== null) setDailyNewLimit(Number(storedNewLimit));
 
-        const storedReview = await AsyncStorage.getItem('@dailyReviewLimit');
-        if (storedReview !== null) setDailyReviewLimit(JSON.parse(storedReview));
+        const storedReviewLimit = await AsyncStorage.getItem('@dailyReviewLimit');
+        if (storedReviewLimit !== null) setDailyReviewLimit(Number(storedReviewLimit));
+
+        const storedApiKey = await AsyncStorage.getItem('@groqApiKey');
+        if (storedApiKey !== null) setGroqApiKey(storedApiKey);
       } catch (e) {
         console.error('Failed to load settings', e);
       }
@@ -30,37 +34,27 @@ export const SettingsProvider = ({ children }) => {
     loadSettings();
   }, []);
 
-  const toggleAutoPlay = async () => {
+  const saveSetting = async (key, value, setter) => {
     try {
-      const newValue = !autoPlayAudio;
-      setAutoPlayAudio(newValue);
-      await AsyncStorage.setItem('@autoPlayAudio', JSON.stringify(newValue));
+      await AsyncStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+      setter(value);
     } catch (e) {
-      console.error('Failed to save autoPlayAudio setting', e);
+      console.error(`Failed to save ${key}`, e);
     }
   };
 
-  const updateLevel = async (level) => {
-    setUserLevel(level);
-    await AsyncStorage.setItem('@userLevel', level);
-  };
-
-  const updateNewLimit = async (limit) => {
-    setDailyNewLimit(limit);
-    await AsyncStorage.setItem('@dailyNewLimit', JSON.stringify(limit));
-  };
-
-  const updateReviewLimit = async (limit) => {
-    setDailyReviewLimit(limit);
-    await AsyncStorage.setItem('@dailyReviewLimit', JSON.stringify(limit));
-  };
-
   return (
-    <SettingsContext.Provider value={{ 
-      autoPlayAudio, toggleAutoPlay,
-      userLevel, updateLevel,
-      dailyNewLimit, updateNewLimit,
-      dailyReviewLimit, updateReviewLimit
+    <SettingsContext.Provider value={{
+      autoPlayAudio,
+      toggleAutoPlay: (val) => saveSetting('@autoPlayAudio', val, setAutoPlayAudio),
+      userLevel,
+      setUserLevel: (val) => saveSetting('@userLevel', val, setUserLevel),
+      dailyNewLimit,
+      setDailyNewLimit: (val) => saveSetting('@dailyNewLimit', val, setDailyNewLimit),
+      dailyReviewLimit,
+      setDailyReviewLimit: (val) => saveSetting('@dailyReviewLimit', val, setDailyReviewLimit),
+      groqApiKey,
+      setGroqApiKey: (val) => saveSetting('@groqApiKey', val, setGroqApiKey)
     }}>
       {children}
     </SettingsContext.Provider>
