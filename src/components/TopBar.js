@@ -1,10 +1,13 @@
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Flame, Star, Volume2, VolumeX } from 'lucide-react-native';
+import { Flame, Star, Volume2, VolumeX, Settings } from 'lucide-react-native';
 import { SettingsContext } from '../context/SettingsContext';
+
+import { useNavigation } from '@react-navigation/native';
 
 export default function TopBar({ streak = 0, xp = 0 }) {
   const { autoPlayAudio, toggleAutoPlay } = useContext(SettingsContext);
+  const navigation = useNavigation();
 
   return (
     <View className="flex-row justify-between items-center px-4 py-4 bg-slate-950 border-b border-slate-800">
@@ -19,16 +22,25 @@ export default function TopBar({ streak = 0, xp = 0 }) {
         </View>
       </View>
       
-      <TouchableOpacity 
-        onPress={toggleAutoPlay}
-        className="bg-slate-900 p-2 rounded-full border border-slate-800"
-      >
-        {autoPlayAudio ? (
-          <Volume2 size={20} color="#a3e635" />
-        ) : (
-          <VolumeX size={20} color="#64748b" />
-        )}
-      </TouchableOpacity>
+      <View className="flex-row gap-2">
+        <TouchableOpacity 
+          onPress={toggleAutoPlay}
+          className="bg-slate-900 p-2 rounded-full border border-slate-800"
+        >
+          {autoPlayAudio ? (
+            <Volume2 size={20} color="#a3e635" />
+          ) : (
+            <VolumeX size={20} color="#64748b" />
+          )}
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('Settings')}
+          className="bg-slate-900 p-2 rounded-full border border-slate-800"
+        >
+          <Settings size={20} color="#64748b" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
