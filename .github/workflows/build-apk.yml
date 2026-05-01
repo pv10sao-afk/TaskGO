@@ -33,6 +33,8 @@ jobs:
 
       - name: Build APK
         working-directory: android
+        env:
+          EXPO_PUBLIC_GROQ_API_KEY: ${{ secrets.EXPO_PUBLIC_GROQ_API_KEY }}
         run: ./gradlew assembleRelease
 
       - name: Upload APK Artifact
