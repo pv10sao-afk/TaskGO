@@ -7,7 +7,15 @@ const getApiKey = async () => {
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-const SYSTEM_INSTRUCTION = `You are a patient, encouraging English Teacher for a Ukrainian-speaking student. Use a supportive tone, always correct grammar errors, and suggest more natural phrasing. 
+const MODE_INSTRUCTIONS = {
+  grammar: 'Focus on grammar accuracy. Correct mistakes clearly and explain the rule in simple terms.',
+  conversation: 'Focus on natural conversation. Ask short follow-up questions and keep the student speaking.',
+  exam: 'Focus on test preparation. Give concise strategies, model answers, and exam-style feedback.',
+};
+
+const buildSystemInstruction = (mode = 'conversation', extraInstruction = '') => `You are a patient, encouraging English Teacher for a Ukrainian-speaking student. Use a supportive tone, always correct grammar errors, and suggest more natural phrasing.
+Mode: ${MODE_INSTRUCTIONS[mode] || MODE_INSTRUCTIONS.conversation}
+${extraInstruction ? `Lesson context: ${extraInstruction}` : ''}
 Every response MUST be a valid JSON object containing exactly these fields: { "message": "...", "correction": "...", "explanation": "..." }. 
 If the user makes a mistake, put the corrected sentence in "correction" and the reason in "explanation". If no mistake, leave them as empty strings.
 Do NOT include any text outside the JSON object. Return purely the JSON object.`;
@@ -44,7 +52,7 @@ const getHistoryText = (msg) => {
   return '';
 };
 
-export const sendChatMessage = async (chatHistory, newMessage) => {
+export const sendChatMessage = async (chatHistory, newMessage, options = {}) => {
   const apiKey = await getApiKey();
   if (!apiKey) return { message: "API key missing. Please set it in the Settings screen.", correction: "", explanation: "" };
   
@@ -59,7 +67,7 @@ export const sendChatMessage = async (chatHistory, newMessage) => {
     }).filter(msg => msg.content);
 
     const messages = [
-      { role: 'system', content: SYSTEM_INSTRUCTION },
+      { role: 'system', content: buildSystemInstruction(options.mode, options.extraInstruction) },
       ...formattedHistory,
       { role: 'user', content: newMessage }
     ];

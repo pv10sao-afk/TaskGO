@@ -32,6 +32,13 @@ function TabNavigator() {
         tabBarStyle: {
           backgroundColor: '#020617',
           borderTopColor: '#1e293b',
+          height: 58,
+          paddingTop: 4,
+          paddingBottom: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '700',
         },
         headerStyle: {
           backgroundColor: '#020617',
@@ -40,12 +47,16 @@ function TabNavigator() {
         },
         headerTintColor: '#f8fafc',
         headerTitleAlign: 'center',
+        headerTitleStyle: {
+          fontSize: 18,
+          fontWeight: '800',
+        },
       })}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Chat" component={ChatScreen} options={{ title: 'AI Tutor' }} />
-      <Tab.Screen name="Scanner" component={TaskScannerScreen} options={{ title: 'Upload Task', unmountOnBlur: true }} />
-      <Tab.Screen name="Vocab" component={VocabBankScreen} options={{ title: 'Vocab Bank' }} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: 'Home' }} />
+      <Tab.Screen name="Chat" component={ChatScreen} options={{ title: 'AI Tutor', tabBarLabel: 'Tutor' }} />
+      <Tab.Screen name="Scanner" component={TaskScannerScreen} options={{ title: 'Upload Task', tabBarLabel: 'Scan', unmountOnBlur: true }} />
+      <Tab.Screen name="Vocab" component={VocabBankScreen} options={{ title: 'Vocab Bank', tabBarLabel: 'Vocab' }} />
     </Tab.Navigator>
   );
 }

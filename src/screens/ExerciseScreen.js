@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react-native';
 import { ProgressContext } from '../context/ProgressContext';
 import * as Speech from 'expo-speech';
 import { LESSONS_DB } from '../data/lessons';
+import { saveMistake } from '../services/learningStorage';
 
 export default function ExerciseScreen() {
   const navigation = useNavigation();
@@ -40,19 +41,27 @@ export default function ExerciseScreen() {
     fetchExercises();
   }, [lessonId]);
 
-  const handleCheck = () => {
+  const handleCheck = async () => {
     const exercise = exercises[currentIndex];
     let correct = false;
+    let studentAnswer = '';
+    let correctAnswer = '';
 
     if (exercise.type === 'multiple_choice') {
       correct = selectedOption === exercise.correct_answer;
+      studentAnswer = selectedOption;
+      correctAnswer = exercise.correct_answer;
     } else if (exercise.type === 'sentence_builder') {
       const built = builtSentence.join(' ');
       const target = (exercise.correct_order || []).join(' ');
       correct = built === target;
+      studentAnswer = built;
+      correctAnswer = target;
     } else if (exercise.type === 'translation') {
       // Basic fuzzy check (case insensitive)
       correct = translationInput.trim().toLowerCase() === (exercise.correct_answer || '').toLowerCase();
+      studentAnswer = translationInput.trim();
+      correctAnswer = exercise.correct_answer;
     }
 
     setIsCorrect(correct);
@@ -62,6 +71,13 @@ export default function ExerciseScreen() {
       Speech.speak("Correct", { language: 'en-US' });
     } else {
       Speech.speak("Incorrect", { language: 'en-US' });
+      await saveMistake({
+        source: title || 'Lesson exercise',
+        prompt: exercise.question,
+        answer: studentAnswer,
+        correction: correctAnswer,
+        explanation: 'Review this exercise again and compare your answer with the correct form.',
+      });
     }
   };
 

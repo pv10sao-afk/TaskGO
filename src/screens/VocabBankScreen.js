@@ -5,17 +5,22 @@ import * as Speech from 'expo-speech';
 import { useIsFocused } from '@react-navigation/native';
 import { VOCABULARY_DB } from '../data/vocabulary';
 import { getVocabularyProgress } from '../services/srsEngine';
+import { getCustomVocabulary } from '../services/learningStorage';
+
+const FILTERS = ['All', 'New', 'Learning', 'Mastered'];
 
 export default function VocabBankScreen() {
   const isFocused = useIsFocused();
   const [vocabData, setVocabData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('All');
 
   const loadData = useCallback(async () => {
     setLoading(true);
     const progress = await getVocabularyProgress();
+    const customWords = await getCustomVocabulary();
     
-    const merged = VOCABULARY_DB.map(word => ({
+    const merged = [...customWords, ...VOCABULARY_DB].map(word => ({
       ...word,
       progress: progress[word.id] || { repetition: 0, isLearned: false }
     }));
@@ -24,7 +29,7 @@ export default function VocabBankScreen() {
     const sorted = merged.sort((a, b) => {
       if (a.progress.isLearned && !b.progress.isLearned) return -1;
       if (!a.progress.isLearned && b.progress.isLearned) return 1;
-      return a.level.localeCompare(b.level);
+      return String(a.level).localeCompare(String(b.level));
     });
 
     setVocabData(sorted);
@@ -55,6 +60,11 @@ export default function VocabBankScreen() {
     if (repetition < 6) return 'Familiar';
     return 'Mastered';
   };
+
+  const filteredVocab = vocabData.filter(item => {
+    const status = getMasteryText(item.progress.repetition);
+    return filter === 'All' || status === filter;
+  });
 
   if (loading) {
     return (
@@ -89,7 +99,27 @@ export default function VocabBankScreen() {
           </View>
         </View>
 
-        {vocabData.map((item, index) => (
+        <View className="flex-row gap-2 mb-6">
+          {FILTERS.map(item => (
+            <TouchableOpacity
+              key={item}
+              onPress={() => setFilter(item)}
+              className={`flex-1 py-2 rounded-full border items-center ${filter === item ? 'bg-lime-400 border-lime-400' : 'bg-slate-900 border-slate-800'}`}
+            >
+              <Text className={`text-xs font-bold ${filter === item ? 'text-slate-950' : 'text-slate-400'}`}>
+                {item}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {filteredVocab.length === 0 ? (
+          <View className="bg-slate-900 border border-slate-800 rounded-2xl p-6 items-center">
+            <BookOpen size={32} color="#64748b" />
+            <Text className="text-slate-300 font-bold mt-3">No words here yet</Text>
+            <Text className="text-slate-500 text-center mt-1">Save words from AI Tutor or scanned tasks.</Text>
+          </View>
+        ) : filteredVocab.map((item, index) => (
           <View key={index} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-4 shadow-sm">
             <View className="flex-row justify-between items-start mb-4">
               <View className="flex-1">
@@ -100,6 +130,7 @@ export default function VocabBankScreen() {
                   </View>
                 </View>
                 <Text className="text-slate-400 font-medium">🇺🇦 {item.translation}</Text>
+                {!!item.meaning && <Text className="text-slate-500 mt-2">{item.meaning}</Text>}
               </View>
               <TouchableOpacity 
                 onPress={() => handlePlay(item.word)} 
@@ -123,6 +154,13 @@ export default function VocabBankScreen() {
                 </View>
               )}
             </View>
+
+            {item.examples && item.examples.length > 0 && (
+              <View className="mt-4 bg-slate-800/60 rounded-xl p-3">
+                <Text className="text-slate-500 text-xs font-bold uppercase mb-1">Example</Text>
+                <Text className="text-slate-300" numberOfLines={2}>{item.examples[0]}</Text>
+              </View>
+            )}
           </View>
         ))}
       </ScrollView>

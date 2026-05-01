@@ -2,9 +2,10 @@ import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import TopBar from '../components/TopBar';
-import { BookA, Headphones, Mic, Trophy } from 'lucide-react-native';
+import { AlertTriangle, BookA, CalendarCheck, Gift, Headphones, Mic, Trophy } from 'lucide-react-native';
 import { SettingsContext } from '../context/SettingsContext';
 import { getTodaySession, getVocabularyProgress } from '../services/srsEngine';
+import { getMistakes } from '../services/learningStorage';
 import { LESSONS_DB } from '../data/lessons';
 
 const getIconForCategory = (category) => {
@@ -23,6 +24,7 @@ export default function DashboardScreen() {
   const { userLevel, dailyNewLimit, dailyReviewLimit } = useContext(SettingsContext);
   
   const [srsStats, setSrsStats] = useState({ newWords: 0, reviews: 0, learnedToday: 0 });
+  const [mistakes, setMistakes] = useState([]);
 
   useEffect(() => {
     if (isFocused) {
@@ -38,6 +40,7 @@ export default function DashboardScreen() {
           reviews: session.reviews.length,
           learnedToday: learnedTodayCount
         });
+        setMistakes(await getMistakes());
       };
       
       loadSrs();
@@ -56,6 +59,14 @@ export default function DashboardScreen() {
   const displayLessons = dynamicLessons.length > 0 ? dynamicLessons : [
     { id: 99, title: 'No lessons yet', icon: Trophy, completed: false, locked: true }
   ];
+
+  const dailyGoalTotal = dailyNewLimit + 5;
+  const planItems = [
+    { label: 'Review', value: `${srsStats.reviews} words`, done: srsStats.reviews === 0 },
+    { label: 'Learn', value: `${srsStats.newWords} new`, done: srsStats.newWords === 0 },
+    { label: 'Mistakes', value: `${mistakes.length} saved`, done: mistakes.length === 0 },
+  ];
+  const rewardText = streak >= 7 ? '7-day reward unlocked' : `${Math.max(0, 7 - streak)} days to reward`;
 
   return (
     <View className="flex-1 bg-slate-950">
@@ -80,14 +91,68 @@ export default function DashboardScreen() {
         <View className="bg-slate-900 w-full p-4 rounded-3xl border border-slate-800 mb-8">
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-slate-100 font-bold">Daily Goal</Text>
-            <Text className="text-lime-400 font-bold">{srsStats.learnedToday} / {dailyNewLimit + 5} words</Text>
+            <Text className="text-lime-400 font-bold">{srsStats.learnedToday} / {dailyGoalTotal} words</Text>
           </View>
           <View className="bg-slate-800 h-3 rounded-full overflow-hidden">
-            <View 
-              className="bg-lime-400 h-full" 
-              style={{ width: `${Math.min(100, (srsStats.learnedToday / (dailyNewLimit + 5)) * 100)}%` }} 
+            <View
+              className="bg-lime-400 h-full"
+              style={{ width: `${Math.min(100, (srsStats.learnedToday / dailyGoalTotal) * 100)}%` }}
             />
           </View>
+        </View>
+
+        <View className="w-full bg-slate-900 p-4 rounded-2xl border border-slate-800 mb-6">
+          <View className="flex-row items-center mb-4">
+            <CalendarCheck size={20} color="#a3e635" />
+            <Text className="text-slate-100 font-bold text-lg ml-2">Today Plan</Text>
+          </View>
+          <View className="gap-3">
+            {planItems.map(item => (
+              <View key={item.label} className="flex-row justify-between items-center bg-slate-800/70 rounded-xl px-3 py-3">
+                <Text className="text-slate-300 font-bold">{item.label}</Text>
+                <Text className={item.done ? 'text-lime-400 font-bold' : 'text-slate-100 font-bold'}>
+                  {item.done ? 'Done' : item.value}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View className="w-full bg-slate-900 p-4 rounded-2xl border border-slate-800 mb-6">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <Gift size={20} color="#facc15" />
+              <Text className="text-slate-100 font-bold text-lg ml-2">Streak Rewards</Text>
+            </View>
+            <Text className="text-yellow-400 font-bold">{rewardText}</Text>
+          </View>
+          <View className="flex-row gap-2 mt-4">
+            {[1, 3, 7, 14].map(day => (
+              <View key={day} className={`flex-1 py-3 rounded-xl items-center border ${streak >= day ? 'bg-yellow-400/20 border-yellow-400' : 'bg-slate-800 border-slate-700'}`}>
+                <Text className={streak >= day ? 'text-yellow-300 font-bold' : 'text-slate-500 font-bold'}>{day}d</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View className="w-full bg-slate-900 p-4 rounded-2xl border border-slate-800 mb-8">
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center">
+              <AlertTriangle size={20} color="#fb7185" />
+              <Text className="text-slate-100 font-bold text-lg ml-2">Mistakes Bank</Text>
+            </View>
+            <Text className="text-rose-400 font-bold">{mistakes.length}</Text>
+          </View>
+          {mistakes.length === 0 ? (
+            <Text className="text-slate-500">No saved mistakes yet.</Text>
+          ) : (
+            mistakes.slice(0, 2).map(item => (
+              <View key={item.id} className="bg-slate-800/70 rounded-xl p-3 mb-2">
+                <Text className="text-slate-300 font-bold" numberOfLines={1}>{item.prompt || item.source}</Text>
+                {!!item.correction && <Text className="text-lime-400 mt-1" numberOfLines={1}>{item.correction}</Text>}
+              </View>
+            ))
+          )}
         </View>
 
         {(srsStats.reviews > 0 || srsStats.newWords > 0) && (

@@ -9,6 +9,7 @@ const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 export default function SettingsScreen() {
   const { 
+    autoPlayAudio, toggleAutoPlay,
     userLevel, setUserLevel, 
     dailyNewLimit, setDailyNewLimit, 
     dailyReviewLimit, setDailyReviewLimit,
@@ -23,6 +24,21 @@ export default function SettingsScreen() {
           <ArrowLeft size={24} color="#f8fafc" />
         </TouchableOpacity>
         <Text className="text-3xl font-bold text-slate-100">Settings</Text>
+      </View>
+
+      <View className="bg-slate-900 p-4 rounded-2xl mb-6 border border-slate-800">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 pr-4">
+            <Text className="text-slate-100 font-bold text-lg">Audio Feedback</Text>
+            <Text className="text-slate-500 text-sm mt-1">Play tutor answers aloud after each AI response.</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => toggleAutoPlay()}
+            className={`w-14 h-8 rounded-full p-1 ${autoPlayAudio ? 'bg-lime-400' : 'bg-slate-700'}`}
+          >
+            <View className={`w-6 h-6 rounded-full bg-white ${autoPlayAudio ? 'self-end' : 'self-start'}`} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Text className="text-xl font-bold text-lime-400 mb-4">Your Current Level</Text>
