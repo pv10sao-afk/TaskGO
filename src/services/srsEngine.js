@@ -75,7 +75,6 @@ export const getTodaySession = async (userLevel, newLimit, reviewLimit) => {
   );
 
   // Find new words: words at the user's level that are not yet learned
-  // If we run out of words at the user's level, we could fallback, but we'll stick to level matching.
   const newWords = mergedDb.filter(w => 
     !w.progress.isLearned && 
     w.level === userLevel

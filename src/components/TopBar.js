@@ -2,22 +2,23 @@ import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Flame, Star, Volume2, VolumeX, Settings } from 'lucide-react-native';
 import { SettingsContext } from '../context/SettingsContext';
-
+import { ProgressContext } from '../context/ProgressContext';
 import { useNavigation } from '@react-navigation/native';
 
-export default function TopBar({ streak = 0, xp = 0 }) {
+export default function TopBar() {
   const { autoPlayAudio, toggleAutoPlay } = useContext(SettingsContext);
+  const { xp, streak } = useContext(ProgressContext);
   const navigation = useNavigation();
 
   return (
     <View className="flex-row justify-between items-center px-4 py-4 bg-slate-950 border-b border-slate-800">
       <View className="flex-row gap-2">
         <View className="flex-row items-center bg-slate-900 rounded-full px-3 py-1 border border-slate-800">
-          <Flame size={20} color="#f97316" className="mr-1" />
+          <Flame size={20} color={streak > 0 ? "#f97316" : "#64748b"} className="mr-1" />
           <Text className="text-orange-500 font-bold text-base">{streak}</Text>
         </View>
         <View className="flex-row items-center bg-slate-900 rounded-full px-3 py-1 border border-slate-800">
-          <Star size={20} color="#eab308" className="mr-1" />
+          <Star size={20} color={xp > 0 ? "#eab308" : "#64748b"} className="mr-1" />
           <Text className="text-yellow-500 font-bold text-base">{xp} XP</Text>
         </View>
       </View>

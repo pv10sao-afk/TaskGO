@@ -10,6 +10,8 @@ import ChatScreen from '../screens/ChatScreen';
 import TaskScannerScreen from '../screens/TaskScannerScreen';
 import VocabBankScreen from '../screens/VocabBankScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import PracticeScreen from '../screens/PracticeScreen';
+import ExerciseScreen from '../screens/ExerciseScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -54,6 +56,8 @@ export default function AppNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Tabs" component={TabNavigator} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ presentation: 'modal' }} />
+        <Stack.Screen name="Practice" component={PracticeScreen} />
+        <Stack.Screen name="Exercise" component={ExerciseScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
