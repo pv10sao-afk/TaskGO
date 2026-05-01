@@ -43,7 +43,7 @@ export default function DashboardScreen() {
       ...lesson,
       icon: getIconForCategory(lesson.category),
       completed: false,
-      locked: index > 0 // Only first is unlocked by default for demo
+      locked: false // Unlocked all lessons so you can test them
     };
   });
 
