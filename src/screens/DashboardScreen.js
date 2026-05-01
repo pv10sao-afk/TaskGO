@@ -4,6 +4,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import TopBar from '../components/TopBar';
 import { AlertTriangle, BookA, CalendarCheck, Gift, Headphones, Mic, Trophy } from 'lucide-react-native';
 import { SettingsContext } from '../context/SettingsContext';
+import { ProgressContext } from '../context/ProgressContext';
 import { getTodaySession, getVocabularyProgress } from '../services/srsEngine';
 import { getMistakes } from '../services/learningStorage';
 import { LESSONS_DB } from '../data/lessons';
@@ -22,6 +23,7 @@ export default function DashboardScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const { userLevel, dailyNewLimit, dailyReviewLimit } = useContext(SettingsContext);
+  const { streak } = useContext(ProgressContext);
   
   const [srsStats, setSrsStats] = useState({ newWords: 0, reviews: 0, learnedToday: 0 });
   const [mistakes, setMistakes] = useState([]);
