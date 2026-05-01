@@ -12,6 +12,38 @@ Every response MUST be a valid JSON object containing exactly these fields: { "m
 If the user makes a mistake, put the corrected sentence in "correction" and the reason in "explanation". If no mistake, leave them as empty strings.
 Do NOT include any text outside the JSON object. Return purely the JSON object.`;
 
+const EMPTY_TUTOR_RESPONSE = { message: "", correction: "", explanation: "" };
+
+const getReadableError = (error, fallback = 'Unexpected response from AI service.') => {
+  if (!error) return fallback;
+  if (typeof error === 'string') return error;
+  return error.message || error.error?.message || JSON.stringify(error);
+};
+
+const normaliseTutorResponse = (rawContent) => {
+  try {
+    const parsed = typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+    return {
+      ...EMPTY_TUTOR_RESPONSE,
+      ...(parsed && typeof parsed === 'object' ? parsed : { message: String(rawContent || '') }),
+    };
+  } catch (error) {
+    return {
+      ...EMPTY_TUTOR_RESPONSE,
+      message: rawContent || 'I received a response, but could not read it. Please try again.',
+    };
+  }
+};
+
+const getHistoryText = (msg) => {
+  if (!msg) return '';
+  if (msg.parts?.[0]?.text) return msg.parts[0].text;
+  if (typeof msg.content === 'string') return msg.content;
+  if (msg.content?.message) return msg.content.message;
+  if (msg.message) return msg.message;
+  return '';
+};
+
 export const sendChatMessage = async (chatHistory, newMessage) => {
   const apiKey = await getApiKey();
   if (!apiKey) return { message: "API key missing. Please set it in the Settings screen.", correction: "", explanation: "" };
@@ -19,17 +51,12 @@ export const sendChatMessage = async (chatHistory, newMessage) => {
   try {
     // Map existing history format to OpenAI format
     const formattedHistory = chatHistory.map(msg => {
-      let content = '';
-      if (msg.role === 'model' || msg.role === 'assistant') {
-        content = JSON.stringify(msg.content);
-      } else {
-        content = msg.content.message || msg.content;
-      }
+      const content = getHistoryText(msg);
       return {
         role: msg.role === 'model' ? 'assistant' : 'user',
         content: content
       };
-    });
+    }).filter(msg => msg.content);
 
     const messages = [
       { role: 'system', content: SYSTEM_INSTRUCTION },
@@ -51,16 +78,29 @@ export const sendChatMessage = async (chatHistory, newMessage) => {
     });
     
     const data = await response.json();
-    if (data.error) {
-      console.error("Groq API Error:", data.error);
-      const errMsg = data.error.message || JSON.stringify(data.error);
+
+    if (!response.ok) {
+      const errMsg = getReadableError(data.error || data, `Request failed with status ${response.status}`);
+      console.error("Groq API Error:", data);
       return { message: `API Error: ${errMsg}`, correction: "", explanation: "" };
     }
+
+    if (data.error) {
+      console.error("Groq API Error:", data.error);
+      const errMsg = getReadableError(data.error);
+      return { message: `API Error: ${errMsg}`, correction: "", explanation: "" };
+    }
+
+    const rawContent = data.choices?.[0]?.message?.content;
+    if (!rawContent) {
+      console.error("Groq API Unexpected Response:", data);
+      return { message: "AI service returned an empty response. Please try again.", correction: "", explanation: "" };
+    }
     
-    return JSON.parse(data.choices[0].message.content);
+    return normaliseTutorResponse(rawContent);
   } catch (error) {
     console.error("Groq Chat Error:", error);
-    return { message: `Connection Error: ${error.message}`, correction: "", explanation: "" };
+    return { message: `Connection Error: ${getReadableError(error, 'Please check your internet connection.')}`, correction: "", explanation: "" };
   }
 };
 
@@ -90,15 +130,28 @@ export const analyzeTaskImage = async (base64Image, promptText) => {
     });
     
     const data = await response.json();
-    if (data.error) {
-      console.error("Groq Vision Error:", data.error);
-      return "Error analyzing the task: " + data.error.message;
+
+    if (!response.ok) {
+      const errMsg = getReadableError(data.error || data, `Request failed with status ${response.status}`);
+      console.error("Groq Vision Error:", data);
+      return "Error analyzing the task: " + errMsg;
     }
 
-    return data.choices[0].message.content;
+    if (data.error) {
+      console.error("Groq Vision Error:", data.error);
+      return "Error analyzing the task: " + getReadableError(data.error);
+    }
+
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error("Groq Vision Unexpected Response:", data);
+      return "The image service returned an empty response. Please try again.";
+    }
+
+    return content;
   } catch (error) {
     console.error("Groq Vision Exception:", error);
-    return "Error analyzing the task.";
+    return "Error analyzing the task: " + getReadableError(error, 'Please check your internet connection.');
   }
 };
 

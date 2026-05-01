@@ -44,7 +44,7 @@ function TabNavigator() {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Chat" component={ChatScreen} options={{ title: 'AI Tutor' }} />
-      <Tab.Screen name="Scanner" component={TaskScannerScreen} options={{ title: 'Upload Task' }} />
+      <Tab.Screen name="Scanner" component={TaskScannerScreen} options={{ title: 'Upload Task', unmountOnBlur: true }} />
       <Tab.Screen name="Vocab" component={VocabBankScreen} options={{ title: 'Vocab Bank' }} />
     </Tab.Navigator>
   );

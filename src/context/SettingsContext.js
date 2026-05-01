@@ -46,7 +46,10 @@ export const SettingsProvider = ({ children }) => {
   return (
     <SettingsContext.Provider value={{
       autoPlayAudio,
-      toggleAutoPlay: (val) => saveSetting('@autoPlayAudio', val, setAutoPlayAudio),
+      toggleAutoPlay: (val) => {
+        const nextValue = typeof val === 'boolean' ? val : !autoPlayAudio;
+        return saveSetting('@autoPlayAudio', nextValue, setAutoPlayAudio);
+      },
       userLevel,
       setUserLevel: (val) => saveSetting('@userLevel', val, setUserLevel),
       dailyNewLimit,

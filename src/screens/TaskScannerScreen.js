@@ -3,6 +3,7 @@ import { View, Text, Image, ScrollView, ActivityIndicator, TouchableOpacity } fr
 import * as ImagePicker from 'expo-image-picker';
 import { Camera, Image as ImageIcon, Volume2 } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
+import { useIsFocused } from '@react-navigation/native';
 import Button from '../components/Button';
 import { analyzeTaskImage } from '../services/groqService';
 import { SettingsContext } from '../context/SettingsContext';
@@ -12,12 +13,19 @@ export default function TaskScannerScreen() {
   const [base64, setBase64] = useState(null);
   const [result, setResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const isFocused = useIsFocused();
   
   const { autoPlayAudio } = useContext(SettingsContext);
 
   useEffect(() => {
     return () => Speech.stop();
   }, []);
+
+  useEffect(() => {
+    if (!isFocused) {
+      Speech.stop();
+    }
+  }, [isFocused]);
 
   const pickImage = async (useCamera = false) => {
     let permissionResult;
@@ -70,6 +78,10 @@ export default function TaskScannerScreen() {
       Speech.speak(result, { language: 'en-US' });
     }
   };
+
+  if (!isFocused) {
+    return <View className="flex-1 bg-slate-950" />;
+  }
 
   return (
     <ScrollView className="flex-1 bg-slate-950" contentContainerStyle={{ padding: 16, flexGrow: 1 }}>

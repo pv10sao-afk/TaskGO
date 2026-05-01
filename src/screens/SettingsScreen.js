@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SettingsContext } from '../context/SettingsContext';
 import { ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';

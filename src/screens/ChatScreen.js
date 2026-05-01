@@ -64,29 +64,27 @@ export default function ChatScreen() {
     if (!inputText.trim()) return;
 
     const newUserMsg = { id: Date.now().toString(), role: 'user', content: { message: inputText } };
+    const history = [...messages];
     setMessages(prev => [...prev, newUserMsg]);
     setInputText('');
     setIsLoading(true);
 
-    const historyForGemini = messages.map(msg => ({
-      role: msg.role === 'model' ? 'model' : 'user',
-      parts: [{ text: msg.role === 'model' ? JSON.stringify(msg.content) : msg.content.message }]
-    }));
+    try {
+      const response = await sendChatMessage(history, newUserMsg.content.message);
 
-    const response = await sendChatMessage(historyForGemini, newUserMsg.content.message);
-    
-    setMessages(prev => [...prev, {
-      id: (Date.now() + 1).toString(),
-      role: 'model',
-      content: response 
-    }]);
-    
-    if (autoPlayAudio && response.message) {
-      Speech.stop();
-      Speech.speak(response.message, { language: 'en-US' });
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'model',
+        content: response
+      }]);
+
+      if (autoPlayAudio && response.message) {
+        Speech.stop();
+        Speech.speak(response.message, { language: 'en-US' });
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
